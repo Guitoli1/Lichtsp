@@ -1,0 +1,2439 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lichtspur</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --ink:#12100d;
+    --surface:#1c1813;
+    --surface-2:#252019;
+    --line:#3a3225;
+    --paper:#f3ecdd;
+    --paper-dim:#a89a86;
+    --sun:#e8a33d;
+    --sun-soft:#8a6a34;
+    --ember:#c1583f;
+    --dusk:#5c7aa6;
+    --dusk-soft:#33455c;
+    --night:#0c111d;
+    --good:#87965a;
+    --danger:#b8543f;
+    --focus:#e8a33d;
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:"Work Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--sun); color:var(--ink); }
+  :focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  .wrap{
+    max-width:520px;
+    margin:0 auto;
+    padding:22px 18px 60px;
+  }
+
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:18px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    font-family:"Fraunces", Georgia, serif;
+    font-weight:600;
+    font-size:1.5rem;
+    letter-spacing:.01em;
+    text-wrap:balance;
+  }
+  .brand .dot{ color:var(--sun); }
+  .clock{
+    font-family:"JetBrains Mono", monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:.92rem;
+    color:var(--paper-dim);
+    text-align:right;
+    line-height:1.3;
+  }
+  .clock .date{ font-size:.68rem; letter-spacing:.04em; text-transform:uppercase; }
+
+  /* ---------- generic panel ---------- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 16px 18px;
+    margin-bottom:14px;
+  }
+  .eyebrow{
+    font-size:.68rem;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--sun);
+    font-weight:600;
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+
+  /* ---------- location panel ---------- */
+  .loc-readout{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-family:"JetBrains Mono", monospace;
+    font-size:.95rem;
+    margin-bottom:12px;
+  }
+  .loc-readout .coords{ font-variant-numeric:tabular-nums; }
+  .loc-tag{
+    font-family:"Work Sans", sans-serif;
+    font-size:.66rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    padding:2px 8px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    color:var(--paper-dim);
+    white-space:nowrap;
+  }
+  .loc-tag.live{ color:var(--good); border-color:var(--good); }
+  .loc-tag.route{ color:var(--sun); border-color:var(--sun); }
+  .loc-tag.sample{ color:var(--paper-dim); }
+  .btn-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn{
+    font-family:"Work Sans", sans-serif;
+    font-size:.82rem;
+    font-weight:600;
+    border-radius:8px;
+    padding:9px 14px;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    color:var(--paper);
+    cursor:pointer;
+  }
+  .btn.primary{
+    background:var(--sun);
+    border-color:var(--sun);
+    color:#231a0a;
+  }
+  .btn.ghost{ background:transparent; }
+  .btn.small{ padding:6px 11px; font-size:.74rem; }
+  .manual-loc{
+    display:none;
+    gap:8px;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px dashed var(--line);
+  }
+  .manual-loc.open{ display:flex; flex-wrap:wrap; }
+  .manual-loc input{
+    flex:1;
+    min-width:110px;
+    font-family:"JetBrains Mono", monospace;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--paper);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:.85rem;
+  }
+  .hint{ font-size:.76rem; color:var(--paper-dim); line-height:1.5; margin-top:8px; }
+
+  /* ---------- route / trip stops ---------- */
+  .route-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .route-item{
+    display:flex; align-items:center; gap:8px;
+    padding:9px 10px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface-2); cursor:pointer;
+  }
+  .route-item.active{ border-color:var(--sun); background:rgba(232,163,61,.12); }
+  .route-item .ri-main{ flex:1; min-width:0; }
+  .route-item .ri-name{ font-size:.86rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .route-item .ri-coords{ font-family:"JetBrains Mono", monospace; font-size:.7rem; color:var(--paper-dim); margin-top:2px; }
+  .route-item .ri-actions{ display:flex; gap:2px; flex-shrink:0; }
+  .route-item .ri-btn{
+    background:transparent; border:none; color:var(--paper-dim);
+    font-size:.85rem; padding:4px 6px; cursor:pointer; border-radius:6px; line-height:1;
+  }
+  .route-item .ri-btn:hover{ color:var(--paper); background:var(--surface); }
+  #routeSearchResults{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+  .route-status{ font-size:.82rem; color:var(--paper-dim); line-height:1.5; margin-top:10px; }
+  .route-item .ri-offline{ font-size:.68rem; color:var(--good); margin-top:2px; }
+  .offline-badge{
+    display:inline-block; font-size:.72rem; color:var(--paper-dim);
+    background:var(--surface); border:1px dashed var(--line);
+    padding:4px 10px; border-radius:999px; margin-bottom:10px; line-height:1.4;
+  }
+
+  /* ---------- gear tips ---------- */
+  .gear-tips{ margin-top:12px; padding-top:12px; border-top:1px dashed var(--line); display:flex; flex-direction:column; gap:8px; }
+  .gear-tip{ display:flex; gap:8px; font-size:.8rem; line-height:1.45; }
+  .gear-tip .gi{ flex-shrink:0; }
+  .gear-tip .gt{ color:var(--paper); }
+
+  /* ---------- gauge panel ---------- */
+  .gauge-wrap{ position:relative; margin-top:2px; }
+  svg.chart{ width:100%; height:auto; display:block; overflow:visible; }
+  .chart-axis-label{
+    font-family:"JetBrains Mono", monospace;
+    font-size:9px;
+    fill:var(--paper-dim);
+  }
+  .chart-now-label{
+    font-family:"JetBrains Mono", monospace;
+    font-size:10px;
+    font-weight:700;
+    fill:var(--paper);
+  }
+
+  .readout-row{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+  }
+  .readout{
+    flex:1;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 12px;
+  }
+  .readout .label{ font-size:.66rem; text-transform:uppercase; letter-spacing:.06em; color:var(--paper-dim); margin-bottom:4px; }
+  .readout .value{
+    font-family:"JetBrains Mono", monospace;
+    font-size:1.15rem;
+    font-variant-numeric:tabular-nums;
+  }
+  .phase-pill{
+    display:inline-block;
+    font-family:"Work Sans", sans-serif;
+    font-size:.78rem;
+    font-weight:600;
+    padding:2px 10px;
+    border-radius:999px;
+  }
+  .phase-tag{ background:rgba(232,163,61,.16); color:var(--sun); }
+  .phase-golden{ background:rgba(193,88,63,.2); color:#e79a70; }
+  .phase-blau{ background:rgba(92,122,166,.22); color:#93b3d8; }
+  .phase-nacht{ background:rgba(255,255,255,.08); color:var(--paper-dim); }
+
+  .next-event{
+    margin-top:12px;
+    font-size:.85rem;
+    color:var(--paper-dim);
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .next-event b{ color:var(--paper); font-weight:600; }
+  .next-event .countdown{
+    font-family:"JetBrains Mono", monospace;
+    color:var(--sun);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .compass-line{
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px dashed var(--line);
+    font-size:.85rem;
+    line-height:1.5;
+  }
+  .compass-line .clockface{
+    font-family:"JetBrains Mono", monospace;
+    color:var(--sun);
+    font-weight:700;
+  }
+  .compass-wrap{
+    display:flex;
+    justify-content:center;
+    margin:16px 0 4px;
+  }
+  .compass-svg{ width:220px; max-width:100%; height:auto; }
+  .compass-label{ font-family:"JetBrains Mono", monospace; font-size:11px; fill:var(--paper-dim); }
+  .compass-legend{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-top:8px;
+    font-size:.68rem;
+    color:var(--paper-dim);
+  }
+  .compass-legend span{ display:inline-flex; align-items:center; gap:4px; }
+  .compass-legend i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+
+  /* ---------- selection chips ---------- */
+  .chip-group{ margin-bottom:14px; }
+  .chip-group:last-child{ margin-bottom:0; }
+  .chip-row{ display:flex; gap:7px; flex-wrap:wrap; }
+  .chip{
+    font-family:"Work Sans", sans-serif;
+    font-size:.82rem;
+    padding:7px 13px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--paper-dim);
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--sun);
+    border-color:var(--sun);
+    color:#231a0a;
+    font-weight:600;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .chip{ transition:background .12s ease, color .12s ease; }
+    .btn{ transition:filter .12s ease; }
+    .btn:hover{ filter:brightness(1.08); }
+  }
+  .spot-subrow{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; }
+  .chip-row.small{ gap:6px; }
+  .chip-row.small .chip{ padding:5px 10px; font-size:.72rem; }
+
+  /* ---------- recommendation panel ---------- */
+  .stat-tiles{ display:flex; gap:8px; margin-bottom:14px; }
+  .stat-tile{
+    flex:1;
+    text-align:center;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 6px;
+  }
+  .stat-tile .n{
+    font-family:"JetBrains Mono", monospace;
+    font-size:1.05rem;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat-tile .l{ font-size:.62rem; text-transform:uppercase; letter-spacing:.05em; color:var(--paper-dim); margin-top:3px; }
+
+  .tip-text{ font-size:.9rem; line-height:1.6; margin:0 0 10px; }
+  .tip-text:last-child{ margin-bottom:0; }
+  .tip-text .k{ color:var(--sun); font-weight:600; }
+
+  .save-row{ margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+  .note-input{
+    display:none;
+    gap:8px;
+    margin-top:10px;
+  }
+  .note-input.open{ display:flex; }
+  .note-input input{
+    flex:1;
+    font-family:"Work Sans", sans-serif;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--paper);
+    border-radius:8px;
+    padding:9px 11px;
+    font-size:.85rem;
+  }
+
+  /* ---------- logbook ---------- */
+  .log-empty{ font-size:.85rem; color:var(--paper-dim); line-height:1.6; }
+  .log-row{
+    display:flex;
+    gap:10px;
+    align-items:baseline;
+    padding:10px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .log-row:last-child{ border-bottom:none; padding-bottom:0; }
+  .log-time{
+    font-family:"JetBrains Mono", monospace;
+    font-size:.78rem;
+    color:var(--paper-dim);
+    white-space:nowrap;
+    width:78px;
+    flex-shrink:0;
+  }
+  .log-body{ flex:1; min-width:0; }
+  .log-tags{ font-size:.72rem; color:var(--sun); margin-bottom:2px; }
+  .log-note{ font-size:.85rem; word-wrap:break-word; }
+  .log-del{
+    background:none;
+    border:none;
+    color:var(--paper-dim);
+    cursor:pointer;
+    font-size:1rem;
+    padding:0 2px;
+    flex-shrink:0;
+  }
+  .log-del:hover{ color:var(--danger); }
+
+  footer{
+    text-align:center;
+    font-size:.72rem;
+    color:var(--paper-dim);
+    margin-top:20px;
+    line-height:1.6;
+  }
+
+  /* ---------- nearby photos ---------- */
+  .photo-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .photo-status{
+    grid-column:1/-1;
+    font-size:.85rem;
+    color:var(--paper-dim);
+    line-height:1.5;
+    padding:6px 0;
+  }
+  .photo-card{
+    position:relative;
+    display:block;
+    aspect-ratio:1;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+  }
+  .photo-card img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .photo-card .cap{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    background:linear-gradient(transparent, rgba(0,0,0,.8));
+    color:var(--paper);
+    line-height:1.3;
+    padding:12px 6px 5px;
+  }
+  .photo-card .cap .t{
+    display:block;
+    font-size:.62rem;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .photo-card .cap .d{
+    display:block;
+    font-size:.58rem;
+    color:var(--paper-dim);
+    margin-top:1px;
+    font-family:"JetBrains Mono", monospace;
+  }
+
+  /* ---------- nearby spots (OpenStreetMap) ---------- */
+  .spot-status{ font-size:.85rem; color:var(--paper-dim); line-height:1.6; }
+  .spot-row{
+    display:flex;
+    gap:10px;
+    align-items:baseline;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+    text-decoration:none;
+    color:inherit;
+  }
+  .spot-row:last-child{ border-bottom:none; padding-bottom:0; }
+  .spot-cat{
+    font-size:.62rem;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--sun);
+    white-space:nowrap;
+    width:92px;
+    flex-shrink:0;
+  }
+  .spot-body{ flex:1; min-width:0; }
+  .spot-name{
+    font-size:.85rem;
+    font-weight:600;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .spot-dist{
+    font-size:.72rem;
+    color:var(--paper-dim);
+    font-family:"JetBrains Mono", monospace;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .spot-light{ font-size:.75rem; margin-top:2px; }
+
+  /* ---------- weather forecast (Open-Meteo) ---------- */
+  .weather-status{ font-size:.85rem; color:var(--paper-dim); line-height:1.6; }
+  .weather-now{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding-bottom:12px;
+    margin-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .weather-now .icon{ font-size:2.1rem; line-height:1; }
+  .weather-now .main{ flex:1; min-width:0; }
+  .weather-now .temp{
+    font-family:"JetBrains Mono", monospace;
+    font-size:1.4rem;
+    font-weight:600;
+  }
+  .weather-now .desc{ font-size:.85rem; color:var(--paper-dim); margin-top:2px; }
+  .weather-meta{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    font-size:.72rem;
+    color:var(--paper-dim);
+    font-family:"JetBrains Mono", monospace;
+    margin-bottom:2px;
+  }
+  .hourly-strip{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding:10px 2px 2px;
+    margin-top:2px;
+  }
+  .hour-item{
+    flex:0 0 auto;
+    width:56px;
+    text-align:center;
+    padding:8px 4px;
+    border-radius:8px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+  }
+  .hour-item .t{ font-size:.6rem; color:var(--paper-dim); font-family:"JetBrains Mono", monospace; }
+  .hour-item .ic{ font-size:1.1rem; margin:4px 0; }
+  .hour-item .tmp{ font-size:.72rem; font-weight:600; font-family:"JetBrains Mono", monospace; }
+  .hour-item .pr{ font-size:.6rem; color:var(--dusk); margin-top:2px; font-family:"JetBrains Mono", monospace; }
+  .sunset-quality{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .sunset-quality .sq-badge{
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    font-weight:700;
+    padding:5px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .sunset-quality .sq-body{ flex:1; min-width:0; }
+  .sunset-quality .sq-label{ font-size:.85rem; font-weight:600; }
+  .sunset-quality .sq-desc{ font-size:.76rem; color:var(--paper-dim); margin-top:2px; line-height:1.4; }
+
+  /* ---------- forward planning (sun/moon/weather per day) ---------- */
+  .plan-days{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding-bottom:2px;
+    margin-bottom:12px;
+  }
+  .plan-day{
+    flex:0 0 auto;
+    width:52px;
+    text-align:center;
+    padding:8px 2px 7px;
+    border-radius:10px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--paper);
+    font-family:"Work Sans", sans-serif;
+    cursor:pointer;
+    position:relative;
+  }
+  .plan-day .dow{ font-size:.62rem; text-transform:uppercase; letter-spacing:.04em; color:var(--paper-dim); }
+  .plan-day .num{ font-size:1rem; font-weight:600; font-family:"JetBrains Mono", monospace; margin-top:2px; }
+  .plan-day.active{ background:var(--sun); border-color:var(--sun); color:var(--ink); }
+  .plan-day.active .dow{ color:var(--ink); opacity:.7; }
+  .plan-day .star{ position:absolute; top:-5px; right:-3px; font-size:.7rem; }
+  .plan-day .fog-flag{ position:absolute; top:-5px; left:-3px; font-size:.7rem; }
+  .fog-note{
+    font-size:.78rem; color:var(--paper); line-height:1.5;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+    padding:9px 12px; margin-bottom:12px;
+  }
+  .plan-status{ font-size:.85rem; color:var(--paper-dim); line-height:1.6; }
+  .plan-best-hint{ font-size:.78rem; color:var(--sun); margin-bottom:12px; line-height:1.5; }
+  .plan-weather{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding-bottom:12px;
+    margin-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .plan-weather .icon{ font-size:1.8rem; }
+  .plan-weather .temps{ font-family:"JetBrains Mono", monospace; font-size:1rem; font-weight:600; }
+  .plan-weather .desc{ font-size:.8rem; color:var(--paper-dim); margin-top:1px; }
+  .plan-section-label{ font-size:.62rem; text-transform:uppercase; letter-spacing:.06em; color:var(--paper-dim); margin:10px 0 4px; }
+  .plan-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:5px 0;
+    border-bottom:1px solid var(--line);
+    font-size:.85rem;
+  }
+  .plan-row:last-child{ border-bottom:none; }
+  .plan-row .k{ color:var(--paper-dim); }
+  .plan-row .v{ font-family:"JetBrains Mono", monospace; font-weight:500; }
+  .plan-moon-row{ display:flex; align-items:center; gap:10px; margin-top:6px; }
+  .plan-moon-row .icon{
+    font-size:1.3rem;
+    width:38px; height:38px;
+    border-radius:50%;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .plan-moon-row .label{ font-size:.85rem; font-weight:600; }
+  .plan-moon-row .pct{ color:var(--paper-dim); font-family:"JetBrains Mono", monospace; font-size:.78rem; }
+
+  #unsplashKeyInput{
+    flex:1;
+    min-width:140px;
+    font-family:"JetBrains Mono", monospace;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--paper);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:.82rem;
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">Licht<span class="dot">·</span>spur</div>
+    <div class="clock">
+      <div class="date" id="dateLabel">—</div>
+      <div id="timeLabel">--:--:--</div>
+    </div>
+  </div>
+
+  <!-- LOCATION -->
+  <div class="panel">
+    <div class="eyebrow">Standort</div>
+    <div class="loc-readout">
+      <span class="coords" id="coordsLabel">wird geladen …</span>
+      <span class="loc-tag sample" id="locTag">Beispiel</span>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="btnLocate">Standort verwenden</button>
+      <button class="btn ghost small" id="btnManualToggle">manuell eingeben</button>
+    </div>
+    <div class="manual-loc" id="manualLoc">
+      <input type="number" step="0.0001" id="inLat" placeholder="Breite (Lat.)">
+      <input type="number" step="0.0001" id="inLon" placeholder="Länge (Lon.)">
+      <button class="btn small" id="btnManualApply">Übernehmen</button>
+    </div>
+    <div class="hint" id="locHint">Beispieldaten für Regensburg. Aktiviere deinen Standort für exakte Werte an deiner Position.</div>
+  </div>
+
+  <!-- ROUTE / TRIP STOPS -->
+  <div class="panel">
+    <div class="eyebrow">Reiseroute</div>
+    <div class="route-list" id="routeList"></div>
+    <div class="hint" id="routeHint" style="display:none;">Noch keine Stationen gespeichert. Lege Ziele deiner Reise an, um jederzeit zwischen ihnen zu wechseln — auch bevor du dort bist oder ohne Netz.</div>
+    <div class="btn-row">
+      <button class="btn primary small" id="btnRouteSaveToggle">Aktuellen Standort speichern</button>
+      <button class="btn ghost small" id="btnRouteAddToggle">Ort hinzufügen</button>
+    </div>
+    <div class="manual-loc" id="routeSaveForm">
+      <input type="text" id="routeSaveName" placeholder="Name für diesen Ort">
+      <button class="btn small" id="btnRouteSaveApply">Speichern</button>
+    </div>
+    <div class="manual-loc" id="routeAddForm">
+      <input type="text" id="routeSearchQuery" placeholder="Ort suchen (z. B. „Lissabon" oder „Turm von Belém")">
+      <button class="btn small" id="btnRouteSearch">Suchen</button>
+    </div>
+    <div id="routeSearchResults"></div>
+    <button class="btn ghost small" id="btnRouteManualToggle" style="display:none;">stattdessen Koordinaten manuell eingeben</button>
+    <div class="manual-loc" id="routeManualForm">
+      <input type="text" id="routeName" placeholder="Name (z. B. Lissabon)">
+      <input type="number" step="0.0001" id="routeLat" placeholder="Breite (Lat.)">
+      <input type="number" step="0.0001" id="routeLon" placeholder="Länge (Lon.)">
+      <button class="btn small" id="btnRouteAddApply">Hinzufügen</button>
+    </div>
+    <button class="btn ghost small" id="btnRouteOfflineAll" style="display:none;margin-top:8px;">Alle Reiseziele offline speichern</button>
+    <div class="hint">Stationen deiner Reise vorab per Namenssuche anlegen und unterwegs mit einem Tipp aktivieren. Über das 📦-Symbol Wetter, Vorausplanung &amp; Orte in der Nähe fürs Reiseziel offline zwischenspeichern — praktisch ohne Roaming oder WLAN am Zielort. Alles nur auf diesem Gerät gespeichert.</div>
+  </div>
+
+  <!-- NEARBY PHOTOS -->
+  <div class="panel">
+    <div class="eyebrow">In der Nähe fotografiert</div>
+    <div id="photoGrid" class="photo-grid"><div class="photo-status" id="photoStatus">Suche Motive in der Nähe …</div></div>
+    <div class="hint">Geotaggte Aufnahmen via Wikimedia Commons — antippen für Bildnachweis &amp; Lizenz. <button class="btn ghost small" id="btnPhotosRefresh" style="margin-left:4px;">Aktualisieren</button></div>
+  </div>
+
+  <!-- UNSPLASH -->
+  <div class="panel">
+    <div class="eyebrow">Inspiration für die Gegend (Unsplash)</div>
+    <div id="unsplashKeySetup">
+      <p class="hint" style="margin-top:0;">Zeigt hochwertige, kuratierte Aufnahmen zur Region — Suche über den Ortsnamen, nicht exakte GPS-Nähe wie bei Commons. Dafür ist ein kostenloser API-Schlüssel nötig (kein Pro-Konto, keine Kosten) — er bleibt nur auf diesem Gerät gespeichert.</p>
+      <div class="btn-row">
+        <input type="text" id="unsplashKeyInput" placeholder="Unsplash Access Key einfügen">
+        <button class="btn primary small" id="btnUnsplashSave">Speichern</button>
+      </div>
+      <div class="hint">Kostenlosen Schlüssel holen: <a href="https://unsplash.com/oauth/applications" target="_blank" rel="noopener noreferrer" style="color:var(--sun);">unsplash.com/oauth/applications</a> → „New Application" → Access Key kopieren (sofort verfügbar).</div>
+    </div>
+    <div id="unsplashGrid" class="photo-grid" style="display:none;"></div>
+    <div class="hint" id="unsplashManage" style="display:none;">Aufnahmen zu „<span id="unsplashQueryLabel">–</span>" — antippen führt zur Originalseite &amp; Bildnachweis. <button class="btn ghost small" id="btnUnsplashRefresh">Aktualisieren</button> <button class="btn ghost small" id="btnUnsplashForget">Schlüssel entfernen</button></div>
+  </div>
+
+  <!-- NEARBY SPOTS -->
+  <div class="panel">
+    <div class="eyebrow">Sehenswerte Orte in der Nähe</div>
+    <div class="chip-row" id="spotCategoryRow" style="margin-bottom:10px;"></div>
+    <div class="spot-subrow">
+      <div class="chip-row small" id="spotRadiusRow"></div>
+      <div class="chip-row small" id="spotSortRow"></div>
+    </div>
+    <div class="hint" id="spotRadiusHint" style="display:none;margin-top:0;margin-bottom:10px;">Bei „Alle" ist die Umkreissuche über Wikipedia technisch auf max. 10 km begrenzt.</div>
+    <div id="spotList"><div class="spot-status" id="spotStatus">Suche Orte in der Nähe …</div></div>
+    <div class="hint">Sehenswürdigkeiten &amp; markante Orte via Wikipedia bzw. gezielt nach Kategorie via Wikidata — antippen öffnet den Artikel. ☀️/🌇 zeigt, wann die Sonne dabei günstig im Rücken steht. <button class="btn ghost small" id="btnSpotsRefresh" style="margin-left:4px;">Aktualisieren</button></div>
+  </div>
+
+  <!-- LIGHT GAUGE -->
+  <div class="panel">
+    <div class="eyebrow">Lichtverlauf heute</div>
+    <div class="gauge-wrap">
+      <svg class="chart" id="chartSvg" viewBox="0 0 600 190" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="readout-row">
+      <div class="readout">
+        <div class="label">Sonnenhöhe</div>
+        <div class="value" id="elevValue">—°</div>
+      </div>
+      <div class="readout">
+        <div class="label">Phase</div>
+        <div class="value"><span class="phase-pill" id="phasePill">—</span></div>
+      </div>
+    </div>
+    <div class="next-event">
+      <span>Als Nächstes: <b id="nextEventName">—</b></span>
+      <span class="countdown" id="nextEventCountdown">—</span>
+    </div>
+    <div class="compass-wrap">
+      <svg class="compass-svg" id="compassSvg" viewBox="0 0 220 220" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="compass-legend">
+      <span><i style="background:var(--sun);"></i>Tageslicht</span>
+      <span><i style="background:var(--ember);"></i>Golden Hour</span>
+      <span><i style="background:var(--dusk);"></i>Blaue Stunde</span>
+    </div>
+    <div class="compass-line" id="compassLine" style="display:none;"></div>
+    <div class="btn-row" style="margin-top:12px;">
+      <button class="btn ghost small" id="btnCompass">Kompass aktivieren</button>
+    </div>
+  </div>
+
+  <!-- WEATHER -->
+  <div class="panel">
+    <div class="eyebrow">Wettervorhersage heute</div>
+    <div id="weatherBody"><div class="weather-status" id="weatherStatus">Lade Vorhersage …</div></div>
+    <div class="hint">Ohne Anmeldung &amp; ohne Schlüssel via Open-Meteo, für deinen genauen Standort. <button class="btn ghost small" id="btnWeatherApply" style="display:none;margin-left:0;">Als Wetter übernehmen</button> <button class="btn ghost small" id="btnWeatherRefresh">Aktualisieren</button></div>
+  </div>
+
+  <!-- FORWARD PLANNING (SUN / MOON / WEATHER PER DAY) -->
+  <div class="panel">
+    <div class="eyebrow">Vorausplanung &amp; Mondphase</div>
+    <div id="planDays" class="plan-days"></div>
+    <div id="planBestHint" class="plan-best-hint" style="display:none;"></div>
+    <div id="planDetail"><div class="plan-status" id="planStatus">Lade Vorschau …</div></div>
+    <div class="hint">Sonnen- &amp; Mondzeiten rein rechnerisch für den gewählten Tag; Wetterlage als 7-Tage-Vorhersage via Open-Meteo. <button class="btn ghost small" id="btnPlanRefresh" style="margin-left:0;">Aktualisieren</button></div>
+  </div>
+
+  <!-- SELECTION -->
+  <div class="panel">
+    <div class="chip-group">
+      <div class="eyebrow">Motiv</div>
+      <div class="chip-row" id="motivRow"></div>
+    </div>
+    <div class="chip-group">
+      <div class="eyebrow">Wetter</div>
+      <div class="chip-row" id="wetterRow"></div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATION -->
+  <div class="panel">
+    <div class="eyebrow">Empfehlung</div>
+    <div class="stat-tiles">
+      <div class="stat-tile"><div class="n" id="statAperture">—</div><div class="l">Blende</div></div>
+      <div class="stat-tile"><div class="n" id="statShutter">—</div><div class="l">Verschluss</div></div>
+      <div class="stat-tile"><div class="n" id="statIso">—</div><div class="l">ISO</div></div>
+    </div>
+    <p class="tip-text"><span class="k">Komposition — </span><span id="tipComposition"></span></p>
+    <p class="tip-text"><span class="k">Licht — </span><span id="tipPhase"></span></p>
+    <p class="tip-text"><span class="k">Wetter — </span><span id="tipWetter"></span></p>
+
+    <div class="save-row">
+      <button class="btn ghost" id="btnSaveMoment">Diesen Moment festhalten</button>
+      <div class="note-input" id="noteInputWrap">
+        <input type="text" id="noteInput" placeholder="Kurze Notiz (optional)" maxlength="80">
+        <button class="btn small primary" id="btnSaveConfirm">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGBOOK -->
+  <div class="panel">
+    <div class="eyebrow">Gespeicherte Momente</div>
+    <div id="logList"><div class="log-empty">Noch nichts gespeichert — dein erster festgehaltener Moment erscheint hier.</div></div>
+  </div>
+
+  <footer>Sonnenstand rein rechnerisch aus Standort &amp; Uhrzeit ermittelt, ohne Netzwerkzugriff. Kompass-Genauigkeit hängt vom Gerät ab.</footer>
+
+</div>
+
+<script>
+(function(){
+
+  /* ================= solar position math ================= */
+  function toRad(d){ return d*Math.PI/180; }
+  function toDeg(r){ return r*180/Math.PI; }
+
+  function julianDay(date){ return date.getTime()/86400000 + 2440587.5; }
+  function julianCentury(jd){ return (jd-2451545.0)/36525.0; }
+  function geomMeanLongSun(t){ let L=280.46646+t*(36000.76983+0.0003032*t); L%=360; if(L<0)L+=360; return L; }
+  function geomMeanAnomalySun(t){ return 357.52911+t*(35999.05029-0.0001537*t); }
+  function eccentricEarthOrbit(t){ return 0.016708634-t*(0.000042037+0.0000001267*t); }
+  function sunEqOfCenter(t,M){
+    const Mr=toRad(M);
+    return Math.sin(Mr)*(1.914602-t*(0.004817+0.000014*t))+Math.sin(2*Mr)*(0.019993-0.000101*t)+Math.sin(3*Mr)*0.000289;
+  }
+  function meanObliquityEcliptic(t){ const sec=21.448-t*(46.815+t*(0.00059-t*0.001813)); return 23+(26+sec/60)/60; }
+  function obliquityCorr(t){ const e0=meanObliquityEcliptic(t); const omega=125.04-1934.136*t; return e0+0.00256*Math.cos(toRad(omega)); }
+  function sunApparentLong(t,trueLong){ const omega=125.04-1934.136*t; return trueLong-0.00569-0.00478*Math.sin(toRad(omega)); }
+  function sunDeclination(t,appLong){ const e=obliquityCorr(t); const sinDec=Math.sin(toRad(e))*Math.sin(toRad(appLong)); return toDeg(Math.asin(sinDec)); }
+  function equationOfTime(t){
+    const eps=toRad(obliquityCorr(t)), l0=toRad(geomMeanLongSun(t)), e=eccentricEarthOrbit(t), m=toRad(geomMeanAnomalySun(t));
+    const y=Math.pow(Math.tan(eps/2),2);
+    const Etime=y*Math.sin(2*l0)-2*e*Math.sin(m)+4*e*y*Math.sin(m)*Math.cos(2*l0)-0.5*y*y*Math.sin(4*l0)-1.25*e*e*Math.sin(2*m);
+    return toDeg(Etime)*4;
+  }
+  function sunParams(date){
+    const jd=julianDay(date), t=julianCentury(jd);
+    const M=geomMeanAnomalySun(t), L0=geomMeanLongSun(t), C=sunEqOfCenter(t,M);
+    const trueLong=L0+C, appLong=sunApparentLong(t,trueLong);
+    return { dec:sunDeclination(t,appLong), eqTime:equationOfTime(t) };
+  }
+  function sunPosition(date, lat, lon){
+    const {dec,eqTime}=sunParams(date);
+    const utcMin=date.getUTCHours()*60+date.getUTCMinutes()+date.getUTCSeconds()/60;
+    let tst=(utcMin+eqTime+4*lon)%1440; if(tst<0)tst+=1440;
+    let ha=tst/4-180;
+    const latR=toRad(lat), decR=toRad(dec), haR=toRad(ha);
+    const zenith=Math.acos(Math.sin(latR)*Math.sin(decR)+Math.cos(latR)*Math.cos(decR)*Math.cos(haR));
+    const elevation=90-toDeg(zenith);
+    const azDenom=Math.cos(latR)*Math.sin(zenith);
+    let azimuth;
+    if(Math.abs(azDenom)<1e-6){ azimuth = ha>0?180:0; }
+    else{
+      let azArg=(Math.sin(latR)*Math.cos(zenith)-Math.sin(decR))/azDenom;
+      azArg=Math.max(-1,Math.min(1,azArg));
+      azimuth = ha>0 ? (toDeg(Math.acos(azArg))+180)%360 : (540-toDeg(Math.acos(azArg)))%360;
+    }
+    return { elevation, azimuth };
+  }
+  function eventTimeUTC(date, lat, lon, elevationDeg, rising){
+    const {dec,eqTime}=sunParams(date);
+    const latR=toRad(lat), decR=toRad(dec);
+    let cosHA=(Math.sin(toRad(elevationDeg))-Math.sin(latR)*Math.sin(decR))/(Math.cos(latR)*Math.cos(decR));
+    if(cosHA>1||cosHA<-1) return null;
+    const HA=toDeg(Math.acos(cosHA));
+    const solarNoonUTCmin=720-4*lon-eqTime;
+    const eventMin = rising ? solarNoonUTCmin-4*HA : solarNoonUTCmin+4*HA;
+    const dayStartUTC=Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    return new Date(dayStartUTC + eventMin*60000);
+  }
+
+  function getPhase(elev){
+    if(elev>6) return 'tag';
+    if(elev>-4) return 'golden';
+    if(elev>-6) return 'blau';
+    return 'nacht';
+  }
+  const phaseLabel = { tag:'Tageslicht', golden:'Golden Hour', blau:'Blaue Stunde', nacht:'Nacht' };
+
+  /* ================= moon (low-precision astronomical algorithm, verified against real-world data) ================= */
+  function norm360(x){ x=x%360; if(x<0) x+=360; return x; }
+  function sunEclipticLonSimple(d){
+    const M=toRad(norm360(357.5291+0.98560028*d));
+    const L0=norm360(280.4665+0.98564736*d);
+    const C=1.9148*Math.sin(M)+0.0200*Math.sin(2*M)+0.0003*Math.sin(3*M);
+    return norm360(L0+C);
+  }
+  function moonCoords(d){
+    const L=norm360(218.316+13.176396*d), M=norm360(134.963+13.064993*d), F=norm360(93.272+13.229350*d);
+    const lon=norm360(L+6.289*Math.sin(toRad(M)));
+    const lat=5.128*Math.sin(toRad(F));
+    const dist=385001-20905*Math.cos(toRad(M)); // km
+    return { lon, lat, dist };
+  }
+  function eclipticToEquatorial(lonDeg, latDeg, oblDeg){
+    const lon=toRad(lonDeg), lat=toRad(latDeg), obl=toRad(oblDeg);
+    const ra=norm360(toDeg(Math.atan2(Math.sin(lon)*Math.cos(obl)-Math.tan(lat)*Math.sin(obl), Math.cos(lon))));
+    const dec=toDeg(Math.asin(Math.sin(lat)*Math.cos(obl)+Math.cos(lat)*Math.sin(obl)*Math.sin(lon)));
+    return { ra, dec };
+  }
+  function moonEquatorial(date){
+    const jd=julianDay(date), t=julianCentury(jd), d=jd-2451545.0;
+    const obl=meanObliquityEcliptic(t);
+    const m=moonCoords(d);
+    const eq=eclipticToEquatorial(m.lon, m.lat, obl);
+    return { ra:eq.ra, dec:eq.dec, dist:m.dist };
+  }
+  function sunEquatorialForPhase(date){
+    const jd=julianDay(date), t=julianCentury(jd), d=jd-2451545.0;
+    const obl=meanObliquityEcliptic(t);
+    const eq=eclipticToEquatorial(sunEclipticLonSimple(d), 0, obl);
+    return { ra:eq.ra, dec:eq.dec };
+  }
+  function moonIllumination(date){
+    const sun=sunEquatorialForPhase(date), moon=moonEquatorial(date);
+    const sRa=toRad(sun.ra), sDec=toRad(sun.dec), mRa=toRad(moon.ra), mDec=toRad(moon.dec);
+    const phi=Math.acos(Math.sin(sDec)*Math.sin(mDec)+Math.cos(sDec)*Math.cos(mDec)*Math.cos(sRa-mRa));
+    const sdist=149598000;
+    const inc=Math.atan2(sdist*Math.sin(phi), moon.dist-sdist*Math.cos(phi));
+    const fraction=(1+Math.cos(inc))/2;
+    const angle=Math.atan2(
+      Math.cos(sDec)*Math.sin(sRa-mRa),
+      Math.sin(sDec)*Math.cos(mDec)-Math.cos(sDec)*Math.sin(mDec)*Math.cos(sRa-mRa)
+    );
+    const phase=0.5+0.5*inc*(angle<0?-1:1)/Math.PI;
+    return { fraction, phase };
+  }
+  const MOON_PHASE_NAMES = [
+    ['Neumond','🌑'], ['Zunehmende Sichel','🌒'], ['Erstes Viertel','🌓'], ['Zunehmender Mond','🌔'],
+    ['Vollmond','🌕'], ['Abnehmender Mond','🌖'], ['Letztes Viertel','🌗'], ['Abnehmende Sichel','🌘']
+  ];
+  function moonPhaseName(phase){
+    const idx = Math.round(phase*8) % 8;
+    return MOON_PHASE_NAMES[idx];
+  }
+  function gst(date){
+    const jd=julianDay(date), t=julianCentury(jd);
+    return norm360(280.46061837 + 360.98564736629*(jd-2451545.0) + 0.000387933*t*t - (t*t*t)/38710000);
+  }
+  function moonAltAz(date, lat, lon){
+    const m=moonEquatorial(date);
+    const lst=norm360(gst(date)+lon);
+    let H=norm360(lst-m.ra); if(H>180) H-=360;
+    const Hr=toRad(H), latR=toRad(lat), decR=toRad(m.dec);
+    const alt=toDeg(Math.asin(Math.sin(latR)*Math.sin(decR)+Math.cos(latR)*Math.cos(decR)*Math.cos(Hr)));
+    const parallax=toDeg(Math.asin(6378.14/m.dist));
+    return { alt: alt - parallax*Math.cos(toRad(alt)) };
+  }
+  function moonTimes(refDate, lat, lon){
+    const h0=-0.5667;
+    const dayStartUTC=Date.UTC(refDate.getUTCFullYear(), refDate.getUTCMonth(), refDate.getUTCDate());
+    const stepMin=10, steps=Math.floor(24*60/stepMin)+1;
+    let prevAlt=null, prevT=null, rise=null, set=null;
+    for(let i=0;i<=steps;i++){
+      const t=new Date(dayStartUTC+i*stepMin*60000);
+      const a=moonAltAz(t, lat, lon).alt;
+      if(prevAlt!==null){
+        if(prevAlt<h0 && a>=h0 && !rise){ const f=(h0-prevAlt)/(a-prevAlt); rise=new Date(prevT.getTime()+f*(t.getTime()-prevT.getTime())); }
+        if(prevAlt>=h0 && a<h0 && !set){ const f=(prevAlt-h0)/(prevAlt-a); set=new Date(prevT.getTime()+f*(t.getTime()-prevT.getTime())); }
+      }
+      prevAlt=a; prevT=t;
+    }
+    return { rise, set };
+  }
+
+  /* ================= state ================= */
+  const SAMPLE = { lat:49.0195, lon:12.0974, name:'Regensburg' };
+  let state = {
+    lat: SAMPLE.lat, lon: SAMPLE.lon, isLive:false, manual:false, routeLabel:null,
+    motiv:'Architektur', wetter:'Sonnig',
+    heading:null, compassOn:false, compassNote:'',
+    spotCategory:'alle', spotRadiusKm:5, spotSort:'entfernung'
+  };
+  function escHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  let dayCache = { dateKey:null, domainStart:null, domainEnd:null, points:null, maxElev:20 };
+
+  /* ================= nearby-spots preferences (category / radius / sort) ================= */
+  const SPOT_CATEGORIES = {
+    alle:       { label:'Alle', qids:null },
+    aussicht:   { label:'Aussichtspunkt', qids:['Q1233637'] },
+    wasserfall: { label:'Wasserfall', qids:['Q34038'] },
+    berg:       { label:'Berg/Gipfel', qids:['Q8502'] },
+    turm:       { label:'Turm/Leuchtturm', qids:['Q12518','Q39715'] },
+    burg:       { label:'Burg/Schloss', qids:['Q23413','Q16560'] },
+    bruecke:    { label:'Brücke', qids:['Q12280'] },
+    kirche:     { label:'Kirche', qids:['Q16970'] }
+  };
+  const SPOT_RADIUS_OPTIONS = [2, 5, 10, 20];
+  const SPOT_PREF_KEY = 'lichtspur_spot_prefs';
+  function loadSpotPrefs(){
+    try{
+      const p = JSON.parse(localStorage.getItem(SPOT_PREF_KEY)||'null');
+      if(p){
+        if(SPOT_CATEGORIES[p.category]) state.spotCategory = p.category;
+        if(SPOT_RADIUS_OPTIONS.includes(p.radiusKm)) state.spotRadiusKm = p.radiusKm;
+        if(p.sort==='licht'||p.sort==='entfernung') state.spotSort = p.sort;
+      }
+    }catch(e){}
+  }
+  function saveSpotPrefs(){
+    try{ localStorage.setItem(SPOT_PREF_KEY, JSON.stringify({ category: state.spotCategory, radiusKm: state.spotRadiusKm, sort: state.spotSort })); }catch(e){}
+  }
+  loadSpotPrefs();
+
+  /* ================= content data ================= */
+  const motivTip = {
+    'Architektur':'Linien gerade halten (Wasserwaage der Kamera aktivieren) und nach Symmetrien oder Fluchtpunkten in der Fassade suchen.',
+    'Natur':'Vordergrund, Mittelgrund und Hintergrund staffeln für Tiefe; ein natürlicher Rahmen aus Ästen oder Fels lenkt den Blick.',
+    'Wasser':'Reflexionen tief aus der Hocke fotografieren; stille Flächen zeigen sich am ehesten kurz vor Sonnenauf- oder -untergang.',
+    'Street':'Erst eine Kulisse mit Kontrast oder Linien suchen, dann warten, bis jemand hineinläuft. Zonenfokus spart entscheidende Sekunden.',
+    'Portrait':'Gesicht zur Lichtquelle drehen, Hintergrund mit offener Blende beruhigen; bei Gegenlicht mit Reflektor oder Aufhellblitz arbeiten.'
+  };
+  const phaseAngle = {
+    'tag':'Steile Sonne erzeugt kurze, harte Schatten – für Struktur von der Seite nutzen oder in offenen Schatten ausweichen.',
+    'golden':'Flaches, warmes Streiflicht: seitlich einfallen lassen für Textur, oder direkt gegen die Sonne für Silhouetten und Flares.',
+    'blau':'Der Himmel liefert kühles Restlicht, künstliche Lichtquellen wirken dagegen warm – dieser Kontrast trägt das Bild. Stativ nutzen.',
+    'nacht':'Ohne Umgebungslicht zählt jede Lichtquelle als eigenes Motiv: Lichtspuren, beleuchtete Fassaden, bei dunklem Standort der Sternenhimmel.'
+  };
+  const wetterNote = {
+    'Sonnig':'Hartes Licht bei klarem Himmel – harte Schatten gezielt für Kontrast einsetzen oder das Motiv in den Schatten stellen.',
+    'Bewölkt':'Lockere Wolken wirken wie ein Diffusor: weiches, gleichmäßiges Licht, gut für Portraits und satte Farben.',
+    'Bedeckt':'Durchgehend bedeckt heißt flaches Licht: Kontrast kommt aus Formen und Farben statt aus Schatten. Belichtung tendenziell +0,3 bis +0,7 EV, da heller Himmel den Messer täuscht.',
+    'Niederschlag':'Regen oder Schnee dämpfen Kontrast und Farben, liefern aber eigene Motive: Tropfen, Spiegelungen auf nassem Asphalt, Flocken im Gegenlicht. Kamera vor Nässe schützen (Regenhülle/Plastiktüte), Frontlinse trockenhalten und höhere ISO für kürzere Verschlusszeiten einplanen.'
+  };
+  const settingsBase = {
+    'tag':   { aperture:'f/8',   shutter:'1/500',            iso:'100'  },
+    'golden':{ aperture:'f/4',   shutter:'1/160',            iso:'200'  },
+    'blau':  { aperture:'f/2.8', shutter:'1/15 · Stativ',    iso:'800'  },
+    'nacht': { aperture:'f/2.8', shutter:'2–15 Sek · Stativ',iso:'1600' }
+  };
+  function adjustSettings(base, motiv, phase){
+    const s = Object.assign({}, base);
+    if(motiv==='Portrait'){
+      s.aperture = phase==='nacht' ? 'f/1.8' : 'f/2';
+    } else if(motiv==='Architektur' || motiv==='Natur'){
+      if(phase==='tag' || phase==='golden') s.aperture = 'f/11';
+    } else if(motiv==='Wasser'){
+      if(phase==='golden' || phase==='blau'){ s.shutter = '1–4 Sek · ND-Filter'; }
+    } else if(motiv==='Street'){
+      if(phase!=='tag'){ s.shutter = '1/250'; s.iso = phase==='golden' ? '400' : '3200'; }
+    }
+    return s;
+  }
+
+  const motivOptions = ['Architektur','Natur','Wasser','Street','Portrait'];
+  const wetterOptions = ['Sonnig','Bewölkt','Bedeckt','Niederschlag'];
+
+  /* ================= dom refs ================= */
+  const $ = id => document.getElementById(id);
+  const coordsLabel=$('coordsLabel'), locTag=$('locTag'), locHint=$('locHint');
+  const dateLabel=$('dateLabel'), timeLabel=$('timeLabel');
+  const elevValue=$('elevValue'), phasePill=$('phasePill');
+  const nextEventName=$('nextEventName'), nextEventCountdown=$('nextEventCountdown');
+  const compassLine=$('compassLine');
+  const compassSvg=$('compassSvg');
+  const statAperture=$('statAperture'), statShutter=$('statShutter'), statIso=$('statIso');
+  const tipComposition=$('tipComposition'), tipPhase=$('tipPhase'), tipWetter=$('tipWetter');
+  const logList=$('logList');
+  const chartSvg=$('chartSvg');
+  const photoGrid=$('photoGrid');
+  const spotList=$('spotList');
+  const unsplashGrid=$('unsplashGrid');
+  const weatherBody=$('weatherBody');
+  const planDays=$('planDays');
+  const planBestHint=$('planBestHint');
+  const planDetail=$('planDetail');
+
+  /* ================= chips ================= */
+  function renderChips(container, options, current, onPick){
+    container.innerHTML = options.map(o =>
+      '<button class="chip'+(o===current?' active':'')+'" data-v="'+o+'">'+o+'</button>'
+    ).join('');
+    container.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ onPick(btn.dataset.v); });
+    });
+  }
+  function pickMotiv(v){ state.motiv=v; renderChips($('motivRow'), motivOptions, state.motiv, pickMotiv); updateTips(); }
+  function pickWetter(v){ state.wetter=v; renderChips($('wetterRow'), wetterOptions, state.wetter, pickWetter); updateTips(); }
+  renderChips($('motivRow'), motivOptions, state.motiv, pickMotiv);
+  renderChips($('wetterRow'), wetterOptions, state.wetter, pickWetter);
+
+  /* ================= location ================= */
+  function fmtCoord(v, posLetter, negLetter){
+    return Math.abs(v).toFixed(3)+'°'+(v>=0?posLetter:negLetter);
+  }
+  function renderLocation(){
+    coordsLabel.textContent = fmtCoord(state.lat,'N','S')+'  '+fmtCoord(state.lon,'O','W');
+    if(state.routeLabel){
+      locTag.textContent='Reiseziel'; locTag.className='loc-tag route';
+      locHint.textContent='Gespeichertes Ziel: '+state.routeLabel+'.';
+    } else if(state.isLive){
+      locTag.textContent='Live'; locTag.className='loc-tag live';
+      locHint.textContent='Standort deines Geräts.';
+    } else if(state.manual){
+      locTag.textContent='Manuell'; locTag.className='loc-tag sample';
+      locHint.textContent='Manuell eingegebene Koordinaten.';
+    } else {
+      locTag.textContent='Beispiel'; locTag.className='loc-tag sample';
+      locHint.textContent='Beispieldaten für '+SAMPLE.name+'. Aktiviere deinen Standort für exakte Werte an deiner Position.';
+    }
+    dayCache.dateKey=null; // force chart rebuild
+    loadNearbyPhotos();
+    loadNearbySpots();
+    loadWeather();
+    loadForecastPlanning();
+    if(getUnsplashKey()) loadUnsplashPhotos();
+    renderRouteList();
+  }
+
+  /* ================= route / trip stops ================= */
+  const ROUTE_KEY = 'lichtspur_route';
+  function loadRoute(){ try{ return JSON.parse(localStorage.getItem(ROUTE_KEY)||'[]'); }catch(e){ return []; } }
+  function saveRoute(list){ try{ localStorage.setItem(ROUTE_KEY, JSON.stringify(list)); }catch(e){} }
+  let routeList = loadRoute();
+  const ROUTE_HINT_DEFAULT = 'Noch keine Stationen gespeichert. Lege Ziele deiner Reise an, um jederzeit zwischen ihnen zu wechseln — auch bevor du dort bist oder ohne Netz.';
+  function renderRouteList(){
+    const el = $('routeList');
+    $('btnRouteOfflineAll').style.display = routeList.length ? '' : 'none';
+    if(!routeList.length){
+      el.innerHTML='';
+      $('routeHint').textContent = ROUTE_HINT_DEFAULT;
+      $('routeHint').style.display='block';
+      return;
+    }
+    $('routeHint').style.display='none';
+    el.innerHTML = routeList.map((r,i)=>{
+      const active = !!state.routeLabel && state.routeLabel===r.name && Math.abs(state.lat-r.lat)<0.0005 && Math.abs(state.lon-r.lon)<0.0005;
+      const off = findOfflineEntryNear(r.lat, r.lon, 0.0005);
+      const offlineLine = off ? '<div class="ri-offline">📦 Offline: '+fmtOfflineStamp(off.savedAt)+'</div>' : '';
+      return '<div class="route-item'+(active?' active':'')+'" data-i="'+i+'">'+
+        '<div class="ri-main"><div class="ri-name">'+escHtml(r.name)+'</div><div class="ri-coords">'+fmtCoord(r.lat,'N','S')+'  '+fmtCoord(r.lon,'O','W')+'</div>'+offlineLine+'</div>'+
+        '<div class="ri-actions">'+
+          '<button class="ri-btn" data-act="offline" title="Für offline speichern/aktualisieren">📦</button>'+
+          (i>0 ? '<button class="ri-btn" data-act="up" title="Nach oben">▲</button>' : '')+
+          (i<routeList.length-1 ? '<button class="ri-btn" data-act="down" title="Nach unten">▼</button>' : '')+
+          '<button class="ri-btn" data-act="del" title="Entfernen">✕</button>'+
+        '</div></div>';
+    }).join('');
+    el.querySelectorAll('.route-item').forEach(rowEl=>{
+      const i = parseInt(rowEl.dataset.i,10);
+      rowEl.addEventListener('click', (ev)=>{
+        if(ev.target.closest('.ri-btn')) return;
+        activateRoutePoint(i);
+      });
+      rowEl.querySelectorAll('.ri-btn').forEach(btn=>{
+        btn.addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          const act = btn.dataset.act;
+          if(act==='del'){ routeList.splice(i,1); saveRoute(routeList); renderRouteList(); }
+          else if(act==='up' && i>0){ const t=routeList[i-1]; routeList[i-1]=routeList[i]; routeList[i]=t; saveRoute(routeList); renderRouteList(); }
+          else if(act==='down' && i<routeList.length-1){ const t=routeList[i+1]; routeList[i+1]=routeList[i]; routeList[i]=t; saveRoute(routeList); renderRouteList(); }
+          else if(act==='offline'){
+            const stop = routeList[i]; if(!stop) return;
+            btn.textContent='⏳'; btn.disabled=true;
+            saveOfflinePackage(stop.lat, stop.lon, stop.name).then(()=>{
+              renderRouteList();
+            }).catch(err=>{
+              btn.textContent='📦'; btn.disabled=false;
+              $('routeHint').style.display='block';
+              $('routeHint').textContent='Offline-Speichern für „'+stop.name+'" fehlgeschlagen ('+(err && err.message ? err.message : 'Fehler')+').';
+            });
+          }
+        });
+      });
+    });
+  }
+  function activateRoutePoint(i){
+    const r = routeList[i];
+    if(!r) return;
+    state.lat=r.lat; state.lon=r.lon; state.isLive=false; state.manual=true; state.routeLabel=r.name;
+    renderLocation();
+  }
+
+  /* ================= offline travel package ================= */
+  const OFFLINE_INDEX_KEY = 'lichtspur_offline_index';
+  function offlineDataKey(lat, lon){ return 'lichtspur_offline_'+lat.toFixed(4)+'_'+lon.toFixed(4); }
+  function loadOfflineIndex(){ try{ return JSON.parse(localStorage.getItem(OFFLINE_INDEX_KEY)||'[]'); }catch(e){ return []; } }
+  function saveOfflineIndex(list){ try{ localStorage.setItem(OFFLINE_INDEX_KEY, JSON.stringify(list)); }catch(e){} }
+  function fmtOfflineStamp(ts){
+    const d = new Date(ts);
+    return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+', '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+' Uhr';
+  }
+  // Exact-ish match for a known route stop (its coordinates never change) — used to show cache status in the route list.
+  function findOfflineEntryNear(lat, lon, epsilon){
+    const idx = loadOfflineIndex();
+    return idx.find(e=>Math.abs(e.lat-lat)<epsilon && Math.abs(e.lon-lon)<epsilon) || null;
+  }
+  // Fuzzy match for the live/current position — GPS fixes jitter a little each time, so match by real-world distance.
+  function getOfflinePackage(lat, lon){
+    const idx = loadOfflineIndex();
+    if(!idx.length) return null;
+    let best=null, bestDistKm=Infinity;
+    idx.forEach(e=>{
+      const dLat=(e.lat-lat), dLon=(e.lon-lon)*Math.cos(lat*Math.PI/180);
+      const distKm = Math.sqrt(dLat*dLat+dLon*dLon)*111;
+      if(distKm<bestDistKm){ bestDistKm=distKm; best=e; }
+    });
+    if(!best || bestDistKm>2) return null;
+    try{
+      const raw = localStorage.getItem(offlineDataKey(best.lat, best.lon));
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function upsertOfflineCache(lat, lon, label, patch){
+    try{
+      const key = offlineDataKey(lat, lon);
+      let pkg=null;
+      try{ pkg = JSON.parse(localStorage.getItem(key)||'null'); }catch(e){ pkg=null; }
+      if(!pkg) pkg = { lat, lon };
+      pkg.label = label || pkg.label || (fmtCoord(lat,'N','S')+' '+fmtCoord(lon,'O','W'));
+      Object.assign(pkg, patch);
+      pkg.savedAt = Date.now();
+      localStorage.setItem(key, JSON.stringify(pkg));
+      const idx = loadOfflineIndex().filter(e=>!(Math.abs(e.lat-lat)<0.0005 && Math.abs(e.lon-lon)<0.0005));
+      idx.push({ lat, lon, label: pkg.label, savedAt: pkg.savedAt });
+      saveOfflineIndex(idx);
+    }catch(e){ /* Speicher voll o.ä. — automatisches Zwischenspeichern ist best effort */ }
+  }
+  async function fetchHourlyForecast(lat, lon){
+    const params = new URLSearchParams({
+      latitude: lat.toFixed(4), longitude: lon.toFixed(4),
+      hourly: 'temperature_2m,precipitation_probability,weather_code,wind_speed_10m,cloud_cover_low,cloud_cover_mid,cloud_cover_high,relative_humidity_2m',
+      timezone: 'auto', forecast_days: '1'
+    });
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?'+params.toString());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data.hourly || !data.hourly.time || !data.hourly.time.length) throw new Error('keine Daten');
+    return data.hourly;
+  }
+  function computeFogRisk(dayTimes, hourly){
+    // Nebel ist v.a. in den frühen Morgenstunden fotografisch relevant (und meist der Grund, warum man danach fragt).
+    if(!hourly || !hourly.time) return dayTimes.map(()=>false);
+    return dayTimes.map(dateStr=>{
+      for(let i=0;i<hourly.time.length;i++){
+        const t = hourly.time[i];
+        if(!t.startsWith(dateStr)) continue;
+        const hour = parseInt(t.slice(11,13),10);
+        if(hour<4 || hour>9) continue;
+        const code = hourly.weather_code ? hourly.weather_code[i] : null;
+        const vis = hourly.visibility ? hourly.visibility[i] : null;
+        if(code===45 || code===48 || (vis!=null && vis<1000)) return true;
+      }
+      return false;
+    });
+  }
+  async function fetchDailyForecast(lat, lon){
+    const params = new URLSearchParams({
+      latitude: lat.toFixed(4), longitude: lon.toFixed(4),
+      daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+      hourly: 'weather_code,visibility',
+      timezone: 'auto', forecast_days: '7'
+    });
+    const res = await fetch('https://api.open-meteo.com/v1/forecast?'+params.toString());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data.daily || !data.daily.time || !data.daily.time.length) throw new Error('keine Daten');
+    const daily = data.daily;
+    daily.fogRisk = computeFogRisk(daily.time, data.hourly);
+    return daily;
+  }
+  function wikidataIdFromUri(uri){ const parts=uri.split('/'); return parts[parts.length-1]; }
+  async function fetchWikidataSpots(lat, lon, radiusKm, qids){
+    const values = qids.map(q=>'wd:'+q).join(' ');
+    const sparql = 'SELECT ?item ?itemLabel ?location ?dist ?article WHERE {\n'+
+      '  VALUES ?type { '+values+' }\n'+
+      '  ?item wdt:P31 ?type ; wdt:P625 ?location .\n'+
+      '  SERVICE wikibase:around {\n'+
+      '    ?item wdt:P625 ?location .\n'+
+      '    bd:serviceParam wikibase:center "Point('+lon+' '+lat+')"^^geo:wktLiteral .\n'+
+      '    bd:serviceParam wikibase:radius "'+radiusKm+'" .\n'+
+      '    bd:serviceParam wikibase:distance ?dist .\n'+
+      '  }\n'+
+      '  OPTIONAL { ?article schema:about ?item ; schema:isPartOf <https://de.wikipedia.org/> . }\n'+
+      '  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en". }\n'+
+      '} ORDER BY ?dist LIMIT 30';
+    const url = 'https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(sparql);
+    const res = await fetch(url, { headers: { 'Accept':'application/sparql-results+json' } });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const bindings = (data && data.results && data.results.bindings) || [];
+    return bindings.map(b=>{
+      const loc = b.location ? b.location.value : '';
+      const m = /Point\(([-0-9.eE]+)\s+([-0-9.eE]+)\)/.exec(loc);
+      const lonV = m ? parseFloat(m[1]) : null;
+      const latV = m ? parseFloat(m[2]) : null;
+      const distKm = b.dist ? parseFloat(b.dist.value) : null;
+      const qid = b.item ? wikidataIdFromUri(b.item.value) : '';
+      return {
+        title: b.itemLabel ? b.itemLabel.value : qid,
+        lat: latV, lon: lonV,
+        dist: distKm!=null ? distKm*1000 : null,
+        source: b.article ? 'Wikipedia' : 'Wikidata',
+        href: b.article ? b.article.value : ('https://www.wikidata.org/wiki/'+qid)
+      };
+    }).filter(it=>it.lat!=null && it.lon!=null && it.title);
+  }
+  async function fetchSpotsList(lat, lon, radiusKm, categoryKey){
+    const cat = SPOT_CATEGORIES[categoryKey] || SPOT_CATEGORIES.alle;
+    if(!cat.qids){
+      const meters = Math.min(Math.round((radiusKm||5)*1000), 10000);
+      let results = await geosearchWikipedia(lat, lon, meters);
+      if(results.length===0 && meters<10000){
+        results = await geosearchWikipedia(lat, lon, 10000);
+      }
+      results.sort((a,b)=>(a.dist||0)-(b.dist||0));
+      return results.slice(0,10);
+    }
+    const results = await fetchWikidataSpots(lat, lon, radiusKm||5, cat.qids);
+    return results.slice(0,10);
+  }
+  async function saveOfflinePackage(lat, lon, label){
+    const [hourlyRes, dailyRes, spotsRes] = await Promise.allSettled([
+      fetchHourlyForecast(lat, lon), fetchDailyForecast(lat, lon), fetchSpotsList(lat, lon, state.spotRadiusKm, state.spotCategory)
+    ]);
+    const patch = {};
+    if(hourlyRes.status==='fulfilled') patch.hourly = hourlyRes.value;
+    if(dailyRes.status==='fulfilled') patch.daily = dailyRes.value;
+    if(spotsRes.status==='fulfilled' && spotsRes.value.length){
+      patch.spots = spotsRes.value; patch.spotCategory = state.spotCategory; patch.spotRadiusKm = state.spotRadiusKm;
+    }
+    if(!Object.keys(patch).length){
+      const failed = [hourlyRes, dailyRes, spotsRes].find(r=>r.status==='rejected');
+      throw new Error(failed && failed.reason && failed.reason.message ? failed.reason.message : 'nicht erreichbar');
+    }
+    upsertOfflineCache(lat, lon, label, patch);
+    return getOfflinePackage(lat, lon);
+  }
+
+  /* ================= weather forecast (Open-Meteo, keyless) ================= */
+  const WMO_CODE = {
+    0:  ['Klarer Himmel','☀️','Sonnig'],
+    1:  ['Überwiegend klar','🌤️','Sonnig'],
+    2:  ['Teilweise bewölkt','⛅','Bewölkt'],
+    3:  ['Bedeckt','☁️','Bedeckt'],
+    45: ['Nebel','🌫️','Bedeckt'],
+    48: ['Reifnebel','🌫️','Bedeckt'],
+    51: ['Leichter Nieselregen','🌦️','Niederschlag'],
+    53: ['Nieselregen','🌦️','Niederschlag'],
+    55: ['Starker Nieselregen','🌦️','Niederschlag'],
+    56: ['Gefrierender Niesel','🌧️','Niederschlag'],
+    57: ['Starker gefrierender Niesel','🌧️','Niederschlag'],
+    61: ['Leichter Regen','🌧️','Niederschlag'],
+    63: ['Regen','🌧️','Niederschlag'],
+    65: ['Starker Regen','🌧️','Niederschlag'],
+    66: ['Gefrierender Regen','🌧️','Niederschlag'],
+    67: ['Starker gefrierender Regen','🌧️','Niederschlag'],
+    71: ['Leichter Schneefall','🌨️','Niederschlag'],
+    73: ['Schneefall','🌨️','Niederschlag'],
+    75: ['Starker Schneefall','❄️','Niederschlag'],
+    77: ['Schneegriesel','🌨️','Niederschlag'],
+    80: ['Leichte Regenschauer','🌦️','Niederschlag'],
+    81: ['Regenschauer','🌦️','Niederschlag'],
+    82: ['Heftige Regenschauer','⛈️','Niederschlag'],
+    85: ['Leichte Schneeschauer','🌨️','Niederschlag'],
+    86: ['Starke Schneeschauer','🌨️','Niederschlag'],
+    95: ['Gewitter','⛈️','Niederschlag'],
+    96: ['Gewitter mit Hagel','⛈️','Niederschlag'],
+    99: ['Starkes Gewitter mit Hagel','⛈️','Niederschlag']
+  };
+  function weatherInfo(code){ return WMO_CODE[code] || ['Unbekannt','❔','Bewölkt']; }
+  function setWeatherStatus(msg){ weatherBody.innerHTML = '<div class="weather-status">'+msg+'</div>'; }
+
+  function nearestHourlyIndex(times, target){
+    let bestI=0, bestDiff=Infinity;
+    for(let i=0;i<times.length;i++){
+      const diff = Math.abs(new Date(times[i]).getTime() - target.getTime());
+      if(diff<bestDiff){ bestDiff=diff; bestI=i; }
+    }
+    return bestI;
+  }
+  const SUNSET_TIER_COLOR = { gut:'var(--sun)', ok:'var(--ember)', klar:'var(--dusk)', schlecht:'var(--paper-dim)' };
+  function sunsetQuality(low, mid, high, humidity){
+    const avgHighMid = (mid+high)/2;
+    let hmScore;
+    if(avgHighMid<=30) hmScore = avgHighMid/30*100;
+    else if(avgHighMid>=70) hmScore = (100-avgHighMid)/30*100;
+    else hmScore = 100;
+    const lowFactor = Math.max(0, 1 - low/60);
+    let score = hmScore * lowFactor;
+    if(humidity!=null && humidity>80) score *= 0.85;
+    score = Math.max(0, Math.min(100, score));
+    const horizonBlocked = low>50;
+    const reallyCloudy = avgHighMid>80;
+    let tier, label, desc;
+    if(score>=65){ tier='gut'; label='Sehr gut'; desc='Hohe und mittlere Wolken in guter Menge, freier Horizont — gute Bedingungen für einen farbenprächtigen Sonnenuntergang.'; }
+    else if(score>=35){ tier='ok'; label='Gut'; desc='Ordentliche Chance auf etwas Farbe am Himmel.'; }
+    else if(horizonBlocked){ tier='schlecht'; label='Horizont verdeckt'; desc='Tiefe Wolken blockieren wahrscheinlich die Sicht zum Horizont.'; }
+    else if(reallyCloudy){ tier='schlecht'; label='Stark bewölkt'; desc='Dichte hohe Bewölkung dämpft die Farben.'; }
+    else { tier='klar'; label='Klar'; desc='Kaum Wolken – ruhiger, klarer Sonnenuntergang ohne große Farbdramatik.'; }
+    return { score:Math.round(score), tier, label, desc };
+  }
+
+  function equipmentTips(temp, wind, precip, humidity, cloudLow, elev){
+    const tips = [];
+    if(wind>=25) tips.push(['💨','Böiger Wind ('+wind+' km/h) — Stativ tief einhängen oder beschweren, Kameragurt sichern.']);
+    else if(wind>=15) tips.push(['🎐','Spürbarer Wind ('+wind+' km/h) — bei langen Belichtungen Stativ stabil & tief aufstellen.']);
+    if(precip>=40) tips.push(['🌂','Regenwahrscheinlichkeit '+precip+' % — Regenschutz oder Plastiktüte fürs Gehäuse einpacken.']);
+    if(temp<=5) tips.push(['🔋','Kälte ('+temp+'°C) — Ersatzakku warm am Körper tragen, Akkus verlieren bei Kälte schnell Leistung.']);
+    if(temp>=28) tips.push(['🥵','Hitze — Kamera nicht in praller Sonne liegen lassen, Sensor & Akku schützen.']);
+    if(elev>40 && cloudLow<30) tips.push(['🕶️','Hartes Mittagslicht — Polfilter oder ND-Filter hilfreich, notfalls Schatten suchen.']);
+    if(humidity!=null && humidity>=85 && temp<15) tips.push(['🧻','Hohe Luftfeuchtigkeit — Mikrofasertuch griffbereit halten (Linse beschlägt bei Temperaturwechsel).']);
+    if(!tips.length) tips.push(['✅','Unauffällige Bedingungen — Standardausrüstung reicht völlig aus.']);
+    return tips;
+  }
+
+  let weatherLoadToken = 0;
+  let weatherApplyCategory = null;
+  const btnWeatherApply = $('btnWeatherApply');
+  function updateWeatherApplyButton(){
+    if(weatherApplyCategory){
+      btnWeatherApply.style.display='';
+      btnWeatherApply.textContent = 'Als Wetter übernehmen ('+weatherApplyCategory+')';
+    } else {
+      btnWeatherApply.style.display='none';
+    }
+  }
+  function renderWeatherFromHourly(h, badgeHtml){
+    const nowT = new Date();
+    let idx = 0;
+    for(let i=0;i<h.time.length;i++){
+      if(new Date(h.time[i]) <= nowT) idx = i; else break;
+    }
+    const [curDesc, curIcon, curCat] = weatherInfo(h.weather_code[idx]);
+    const curTemp = Math.round(h.temperature_2m[idx]);
+    const curWind = Math.round(h.wind_speed_10m[idx]);
+    const curPrecip = h.precipitation_probability[idx];
+    weatherApplyCategory = curCat;
+    updateWeatherApplyButton();
+
+    const upcoming = [];
+    for(let i=idx+1; i<h.time.length && upcoming.length<6; i+=2){ upcoming.push(i); }
+    const hourHtml = upcoming.map(i=>{
+      const t = new Date(h.time[i]);
+      const [, icon] = weatherInfo(h.weather_code[i]);
+      const temp = Math.round(h.temperature_2m[i]);
+      const pr = h.precipitation_probability[i];
+      const hh = String(t.getHours()).padStart(2,'0');
+      return '<div class="hour-item"><div class="t">'+hh+' Uhr</div><div class="ic">'+icon+'</div><div class="tmp">'+temp+'°</div><div class="pr">'+pr+'%</div></div>';
+    }).join('');
+
+    let sunsetHtml = '';
+    const sunsetT = eventTimeUTC(nowT, state.lat, state.lon, -0.833, false);
+    if(sunsetT && h.cloud_cover_low){
+      const sIdx = nearestHourlyIndex(h.time, sunsetT);
+      const sq = sunsetQuality(h.cloud_cover_low[sIdx], h.cloud_cover_mid[sIdx], h.cloud_cover_high[sIdx], h.relative_humidity_2m ? h.relative_humidity_2m[sIdx] : null);
+      sunsetHtml =
+        '<div class="sunset-quality"><div class="sq-badge" style="background:'+SUNSET_TIER_COLOR[sq.tier]+';color:var(--ink);">'+sq.label+'</div>'+
+        '<div class="sq-body"><div class="sq-label">Sonnenuntergang um '+fmtTime(sunsetT)+'</div><div class="sq-desc">'+sq.desc+'</div></div></div>';
+    }
+
+    const curElev = sunPosition(nowT, state.lat, state.lon).elevation;
+    const curCloudLow = h.cloud_cover_low ? h.cloud_cover_low[idx] : 0;
+    const curHumidity = h.relative_humidity_2m ? h.relative_humidity_2m[idx] : null;
+    const gearHtml = '<div class="gear-tips">'+equipmentTips(curTemp, curWind, curPrecip, curHumidity, curCloudLow, curElev)
+      .map(([icon,text])=>'<div class="gear-tip"><span class="gi">'+icon+'</span><span class="gt">'+text+'</span></div>').join('')+'</div>';
+
+    weatherBody.innerHTML =
+      (badgeHtml||'')+
+      '<div class="weather-now"><div class="icon">'+curIcon+'</div><div class="main"><div class="temp">'+curTemp+'°C</div><div class="desc">'+curDesc+'</div></div></div>'+
+      '<div class="weather-meta"><span>Niederschlag '+curPrecip+' %</span><span>Wind '+curWind+' km/h</span></div>'+
+      (hourHtml ? '<div class="hourly-strip">'+hourHtml+'</div>' : '')+
+      sunsetHtml+
+      gearHtml;
+  }
+  async function loadWeather(){
+    const token = ++weatherLoadToken;
+    weatherApplyCategory = null;
+    updateWeatherApplyButton();
+    setWeatherStatus('Lade Vorhersage …');
+    try{
+      const h = await fetchHourlyForecast(state.lat, state.lon);
+      if(token!==weatherLoadToken) return;
+      renderWeatherFromHourly(h, '');
+      upsertOfflineCache(state.lat, state.lon, state.routeLabel, { hourly: h });
+    }catch(e){
+      if(token!==weatherLoadToken) return;
+      const off = getOfflinePackage(state.lat, state.lon);
+      if(off && off.hourly){
+        renderWeatherFromHourly(off.hourly, '<div class="offline-badge">📦 Offline-Daten vom '+fmtOfflineStamp(off.savedAt)+'</div>');
+      } else {
+        setWeatherStatus('Vorhersage gerade nicht abrufbar ('+(e.message||'Fehler')+').');
+      }
+    }
+  }
+  btnWeatherApply.addEventListener('click', ()=>{ if(weatherApplyCategory) pickWetter(weatherApplyCategory); });
+  $('btnWeatherRefresh').addEventListener('click', loadWeather);
+
+  /* ================= forward planning: sun/moon/weather for the coming days ================= */
+  const PLAN_DOW = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  let planLoadToken = 0;
+  let planCache = { daily:null, bestIdx:0 };
+  let planDayOffset = 0;
+  function fmtOrDash(t){ return t ? fmtTime(t) : '—'; }
+  function planDayLabel(i, date){
+    // Date-based (not index-based) so labels stay correct even for an older offline-cached forecast.
+    const dateStr = date.toISOString().slice(0,10);
+    const today = new Date(); const todayStr = today.toISOString().slice(0,10);
+    if(dateStr===todayStr) return 'Heute';
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+    if(dateStr===tomorrow.toISOString().slice(0,10)) return 'Morgen';
+    return PLAN_DOW[date.getUTCDay()];
+  }
+  function renderPlanDays(){
+    if(!planCache.daily) return;
+    const d = planCache.daily;
+    planDays.innerHTML = d.time.map((dateStr,i)=>{
+      const date = new Date(dateStr+'T12:00:00Z');
+      const label = planDayLabel(i, date);
+      const star = (i===planCache.bestIdx) ? '<span class="star">✨</span>' : '';
+      const fog = (d.fogRisk && d.fogRisk[i]) ? '<span class="fog-flag" title="Nebel am Morgen möglich">🌫️</span>' : '';
+      return '<div class="plan-day'+(i===planDayOffset?' active':'')+'" data-i="'+i+'">'+star+fog+'<div class="dow">'+label+'</div><div class="num">'+date.getUTCDate()+'</div></div>';
+    }).join('');
+    planDays.querySelectorAll('.plan-day').forEach(el=>{
+      el.addEventListener('click', ()=>{ selectPlanDay(parseInt(el.dataset.i,10)); });
+    });
+  }
+  function renderPlanDetail(offset){
+    const d = planCache.daily;
+    if(!d) return;
+    const dateStr = d.time[offset];
+    const date = new Date(dateStr+'T12:00:00Z');
+    const [desc, icon] = weatherInfo(d.weather_code[offset]);
+    const tMax = Math.round(d.temperature_2m_max[offset]);
+    const tMin = Math.round(d.temperature_2m_min[offset]);
+    const precip = d.precipitation_probability_max[offset] || 0;
+
+    const sunrise = eventTimeUTC(date, state.lat, state.lon, -0.833, true);
+    const sunset = eventTimeUTC(date, state.lat, state.lon, -0.833, false);
+    const goldenMorningEnd = eventTimeUTC(date, state.lat, state.lon, 6, true);
+    const goldenEveningStart = eventTimeUTC(date, state.lat, state.lon, 6, false);
+    const blueEveningStart = eventTimeUTC(date, state.lat, state.lon, -4, false);
+    const blueEveningEnd = eventTimeUTC(date, state.lat, state.lon, -6, false);
+
+    const illum = moonIllumination(date);
+    const [moonName, moonIcon] = moonPhaseName(illum.phase);
+    const mt = moonTimes(date, state.lat, state.lon);
+
+    const rows = [
+      ['Sonnenaufgang', fmtOrDash(sunrise)],
+      ['Golden Hour morgens bis', fmtOrDash(goldenMorningEnd)],
+      ['Golden Hour abends ab', fmtOrDash(goldenEveningStart)],
+      ['Sonnenuntergang', fmtOrDash(sunset)],
+      ['Blaue Stunde abends', (blueEveningStart&&blueEveningEnd) ? (fmtTime(blueEveningStart)+'–'+fmtTime(blueEveningEnd)) : '—']
+    ];
+    const rowsHtml = rows.map(r=>'<div class="plan-row"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>').join('');
+    const fogRisk = d.fogRisk ? d.fogRisk[offset] : false;
+    const fogHtml = fogRisk ? '<div class="fog-note">🌫️ Nebel am frühen Morgen möglich — stimmungsvoll fürs Foto, aber Sicht kann eingeschränkt sein.</div>' : '';
+
+    planDetail.innerHTML =
+      '<div class="plan-weather"><div class="icon">'+icon+'</div><div><div class="temps">'+tMin+'°–'+tMax+'°C</div><div class="desc">'+desc+' · '+precip+' % Regenwahrscheinlichkeit</div></div></div>'+
+      fogHtml+
+      '<div class="plan-section-label">Licht an diesem Tag</div>'+
+      rowsHtml+
+      '<div class="plan-section-label">Mond</div>'+
+      '<div class="plan-moon-row"><div class="icon">'+moonIcon+'</div><div><div class="label">'+moonName+'</div><div class="pct">'+Math.round(illum.fraction*100)+' % beleuchtet</div></div></div>'+
+      '<div class="plan-row"><span class="k">Mondaufgang</span><span class="v">'+fmtOrDash(mt.rise)+'</span></div>'+
+      '<div class="plan-row"><span class="k">Monduntergang</span><span class="v">'+fmtOrDash(mt.set)+'</span></div>';
+  }
+  function selectPlanDay(i){
+    planDayOffset = i;
+    renderPlanDetail(i);
+    renderPlanDays();
+  }
+  function applyPlanDaily(daily, offlineBadgeHtml){
+    let bestIdx=0, bestScore=Infinity;
+    daily.time.forEach((_,i)=>{
+      const code = daily.weather_code[i];
+      const penalty = code<=1 ? 0 : code===2 ? 8 : (code===3||code===45||code===48) ? 16 : 45;
+      const score = (daily.precipitation_probability_max[i]||0) + penalty;
+      if(score<bestScore){ bestScore=score; bestIdx=i; }
+    });
+    planCache = { daily, bestIdx };
+
+    const bd = new Date(daily.time[bestIdx]+'T12:00:00Z');
+    const [bdesc] = weatherInfo(daily.weather_code[bestIdx]);
+    const bLabel = planDayLabel(bestIdx, bd)==='Heute' ? 'Heute' : (planDayLabel(bestIdx, bd)==='Morgen' ? 'morgen' : 'am '+PLAN_DOW[bd.getUTCDay()]+', den '+bd.getUTCDate()+'.');
+    planBestHint.style.display='block';
+    planBestHint.textContent = (offlineBadgeHtml ? '📦 Offline-Daten'+offlineBadgeHtml+' — ' : '')+'✨ Bester Tag für Fotolicht diese Woche: '+bLabel+' — '+bdesc+', '+(daily.precipitation_probability_max[bestIdx]||0)+' % Regenwahrscheinlichkeit.';
+
+    selectPlanDay(0);
+  }
+  async function loadForecastPlanning(){
+    const token = ++planLoadToken;
+    planDayOffset = 0;
+    planBestHint.style.display='none';
+    planDays.innerHTML='';
+    planDetail.innerHTML = '<div class="plan-status">Lade Vorschau …</div>';
+    try{
+      const daily = await fetchDailyForecast(state.lat, state.lon);
+      if(token!==planLoadToken) return;
+      applyPlanDaily(daily, '');
+      upsertOfflineCache(state.lat, state.lon, state.routeLabel, { daily });
+    }catch(e){
+      if(token!==planLoadToken) return;
+      const off = getOfflinePackage(state.lat, state.lon);
+      if(off && off.daily){
+        applyPlanDaily(off.daily, ' vom '+fmtOfflineStamp(off.savedAt));
+      } else {
+        planDetail.innerHTML = '<div class="plan-status">Vorausplanung gerade nicht abrufbar ('+(e.message||'Fehler')+').</div>';
+      }
+    }
+  }
+  $('btnPlanRefresh').addEventListener('click', loadForecastPlanning);
+
+  /* ================= inspiration photos (Unsplash, optional free API key) ================= */
+  const UNSPLASH_KEY_STORAGE='lichtspur_unsplash_key';
+  function getUnsplashKey(){ try{ return (localStorage.getItem(UNSPLASH_KEY_STORAGE)||'').trim(); }catch(e){ return ''; } }
+  function setUnsplashKey(k){ try{ localStorage.setItem(UNSPLASH_KEY_STORAGE, k); }catch(e){} }
+  function clearUnsplashKey(){ try{ localStorage.removeItem(UNSPLASH_KEY_STORAGE); }catch(e){} }
+  function updateUnsplashUI(){
+    const key=getUnsplashKey();
+    if(key){
+      $('unsplashKeySetup').style.display='none';
+      unsplashGrid.style.display='grid';
+      $('unsplashManage').style.display='block';
+      loadUnsplashPhotos();
+    } else {
+      $('unsplashKeySetup').style.display='block';
+      unsplashGrid.style.display='none';
+      $('unsplashManage').style.display='none';
+    }
+  }
+  function setUnsplashStatus(msg){
+    unsplashGrid.style.display='grid';
+    unsplashGrid.innerHTML='';
+    const div=document.createElement('div'); div.className='photo-status'; div.textContent=msg;
+    unsplashGrid.appendChild(div);
+  }
+  async function reverseGeocode(lat, lon){
+    const params=new URLSearchParams({ format:'jsonv2', lat:String(lat), lon:String(lon), zoom:'12', addressdetails:'1', 'accept-language':'de' });
+    const res=await fetch('https://nominatim.openstreetmap.org/reverse?'+params.toString());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const addr=data.address || {};
+    const place=addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state || data.name || '';
+    const country=addr.country || '';
+    return { place, country, label:[place, country].filter(Boolean).join(', ') };
+  }
+  let unsplashLoadToken=0;
+  async function loadUnsplashPhotos(){
+    const key=getUnsplashKey();
+    if(!key) return;
+    const token=++unsplashLoadToken;
+    setUnsplashStatus('Suche Ort & passende Aufnahmen …');
+    try{
+      const geo = await reverseGeocode(state.lat, state.lon);
+      if(token!==unsplashLoadToken) return;
+      const query = geo.place || (state.lat.toFixed(2)+', '+state.lon.toFixed(2));
+      const searchTerm = [geo.place, geo.country].filter(Boolean).join(' ') || query;
+      $('unsplashQueryLabel').textContent = geo.label || query;
+      const params=new URLSearchParams({ query:searchTerm, per_page:'12', orientation:'landscape', client_id:key });
+      const res = await fetch('https://api.unsplash.com/search/photos?'+params.toString());
+      if(token!==unsplashLoadToken) return;
+      if(!res.ok){
+        if(res.status===401 || res.status===403) throw new Error('Schlüssel ungültig oder abgelehnt');
+        throw new Error('HTTP '+res.status);
+      }
+      const data=await res.json();
+      const results = data.results || [];
+      if(results.length===0){ setUnsplashStatus('Keine Unsplash-Aufnahmen zu „'+query+'" gefunden.'); return; }
+      unsplashGrid.innerHTML='';
+      results.forEach(ph=>{
+        const src = ph.urls && (ph.urls.small || ph.urls.thumb);
+        if(!src) return;
+        const card=document.createElement('a');
+        card.className='photo-card';
+        card.href=(ph.links && ph.links.html) || '#';
+        card.target='_blank'; card.rel='noopener noreferrer';
+        const img=document.createElement('img'); img.src=src; img.alt=ph.alt_description||''; img.loading='lazy';
+        const cap=document.createElement('div'); cap.className='cap';
+        const capTitle=document.createElement('span'); capTitle.className='t'; capTitle.textContent=ph.description || ph.alt_description || 'Ohne Titel';
+        cap.appendChild(capTitle);
+        const capOwner=document.createElement('span'); capOwner.className='d'; capOwner.textContent='von '+((ph.user && ph.user.name) || 'unbekannt');
+        cap.appendChild(capOwner);
+        card.appendChild(img); card.appendChild(cap);
+        unsplashGrid.appendChild(card);
+      });
+    }catch(e){
+      if(token!==unsplashLoadToken) return;
+      setUnsplashStatus('Unsplash-Aufnahmen gerade nicht abrufbar ('+(e.message||'Fehler')+'). Prüfe ggf. den API-Schlüssel.');
+    }
+  }
+  $('btnUnsplashSave').addEventListener('click', ()=>{
+    const v=$('unsplashKeyInput').value.trim();
+    if(!v) return;
+    setUnsplashKey(v);
+    updateUnsplashUI();
+  });
+  $('btnUnsplashForget').addEventListener('click', ()=>{
+    clearUnsplashKey();
+    $('unsplashKeyInput').value='';
+    updateUnsplashUI();
+  });
+  $('btnUnsplashRefresh').addEventListener('click', loadUnsplashPhotos);
+
+  /* ================= nearby photos (Wikimedia Commons) ================= */
+  function setPhotoStatus(msg){
+    photoGrid.innerHTML='';
+    const div=document.createElement('div');
+    div.className='photo-status';
+    div.textContent=msg;
+    photoGrid.appendChild(div);
+  }
+  function fmtDist(m){
+    if(m==null || isNaN(m)) return '';
+    if(m<1000) return Math.round(m)+' m entfernt';
+    return (m/1000).toFixed(1).replace('.',',')+' km entfernt';
+  }
+  async function geosearchCommons(lat, lon, radius){
+    const params=new URLSearchParams({
+      action:'query', generator:'geosearch',
+      ggscoord: lat+'|'+lon, ggsradius:String(radius), ggsnamespace:'6', ggslimit:'18',
+      prop:'imageinfo', iiprop:'url|extmetadata', iiurlwidth:'320',
+      format:'json', origin:'*'
+    });
+    const res=await fetch('https://commons.wikimedia.org/w/api.php?'+params.toString());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    const pages = data && data.query && data.query.pages ? Object.values(data.query.pages) : [];
+    return pages.filter(p=>p.imageinfo && p.imageinfo[0] && p.imageinfo[0].thumburl);
+  }
+  let photoLoadToken=0;
+  async function loadNearbyPhotos(){
+    const token=++photoLoadToken;
+    setPhotoStatus('Suche Motive in der Nähe …');
+    try{
+      let pages=[];
+      for(const radius of [2000, 6000, 10000]){
+        pages = await geosearchCommons(state.lat, state.lon, radius);
+        if(token!==photoLoadToken) return;
+        if(pages.length>0) break;
+      }
+      if(pages.length===0){ setPhotoStatus('Keine geotaggten Aufnahmen in der Nähe gefunden.'); return; }
+      pages.sort((a,b)=>(a.dist||0)-(b.dist||0));
+      photoGrid.innerHTML='';
+      pages.slice(0,12).forEach(p=>{
+        const info=p.imageinfo[0];
+        const title=(p.title||'').replace(/^File:/,'').replace(/\.[a-zA-Z0-9]{2,5}$/,'').replace(/_/g,' ');
+        const card=document.createElement('a');
+        card.href=info.descriptionurl; card.target='_blank'; card.rel='noopener noreferrer';
+        card.className='photo-card';
+        const img=document.createElement('img');
+        img.src=info.thumburl; img.alt=title; img.loading='lazy';
+        const cap=document.createElement('div');
+        cap.className='cap';
+        const capTitle=document.createElement('span'); capTitle.className='t'; capTitle.textContent=title;
+        cap.appendChild(capTitle);
+        const distText=fmtDist(p.dist);
+        if(distText){ const capDist=document.createElement('span'); capDist.className='d'; capDist.textContent=distText; cap.appendChild(capDist); }
+        card.appendChild(img); card.appendChild(cap);
+        photoGrid.appendChild(card);
+      });
+    }catch(e){
+      if(token!==photoLoadToken) return;
+      setPhotoStatus('Aufnahmen aus der Nähe sind hier gerade nicht abrufbar (kein Netzwerkzugriff möglich).');
+    }
+  }
+  /* ================= nearby spots (OpenStreetMap / Overpass) ================= */
+  function setSpotStatus(msg){
+    spotList.innerHTML='';
+    const div=document.createElement('div');
+    div.className='spot-status'; div.textContent=msg;
+    spotList.appendChild(div);
+  }
+  async function geosearchWikipedia(lat, lon, radius){
+    const params = new URLSearchParams({
+      action:'query', list:'geosearch',
+      gscoord: lat+'|'+lon, gsradius:String(Math.min(radius,10000)), gslimit:'20',
+      format:'json', origin:'*'
+    });
+    const res = await fetch('https://de.wikipedia.org/w/api.php?'+params.toString());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    return (data && data.query && data.query.geosearch) || [];
+  }
+  let spotLoadToken=0;
+
+  /* ----- Licht-Richtung: steht die Sonne beim Fotografieren dieses Orts günstig im Rücken? ----- */
+  function bearingDeg(lat1, lon1, lat2, lon2){
+    const φ1=toRad(lat1), φ2=toRad(lat2), Δλ=toRad(lon2-lon1);
+    const y = Math.sin(Δλ)*Math.cos(φ2);
+    const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+    return (toDeg(Math.atan2(y,x))+360)%360;
+  }
+  function angleDiff(a,b){ const d=Math.abs(a-b)%360; return d>180?360-d:d; }
+  function computeLightAzimuths(lat, lon, date){
+    try{
+      const sunriseT = eventTimeUTC(date, lat, lon, -0.833, true);
+      const goldenMorningEndT = eventTimeUTC(date, lat, lon, 6, true);
+      const goldenEveningStartT = eventTimeUTC(date, lat, lon, 6, false);
+      const sunsetT = eventTimeUTC(date, lat, lon, -0.833, false);
+      if(!sunriseT || !goldenMorningEndT || !goldenEveningStartT || !sunsetT) return null;
+      const morningMid = new Date((sunriseT.getTime()+goldenMorningEndT.getTime())/2);
+      const eveningMid = new Date((goldenEveningStartT.getTime()+sunsetT.getTime())/2);
+      return {
+        morning: sunPosition(morningMid, lat, lon).azimuth,
+        evening: sunPosition(eveningMid, lat, lon).azimuth
+      };
+    }catch(e){ return null; }
+  }
+  function lightTagFor(bearing, az){
+    if(!az) return { icon:'', title:'' };
+    const target=(bearing+180)%360;
+    const morningGood = angleDiff(az.morning, target) < 70;
+    const eveningGood = angleDiff(az.evening, target) < 70;
+    if(morningGood && eveningGood) return { icon:'☀️🌇', title:'Morgens & abends günstig beleuchtet (Sonne im Rücken)' };
+    if(morningGood) return { icon:'☀️', title:'Morgens günstig beleuchtet (Sonne im Rücken)' };
+    if(eveningGood) return { icon:'🌇', title:'Abends günstig beleuchtet (Sonne im Rücken)' };
+    return { icon:'', title:'' };
+  }
+  function currentLightScore(bearing, lat, lon, now){
+    const pos = sunPosition(now, lat, lon);
+    if(pos.elevation < -6) return 999;
+    return angleDiff(pos.azimuth, (bearing+180)%360);
+  }
+
+  let lastSpotResults = [], lastSpotBadgeHtml = '';
+  function renderSpotRows(results, badgeHtml){
+    lastSpotResults = results; lastSpotBadgeHtml = badgeHtml||'';
+    const now = new Date();
+    const az = computeLightAzimuths(state.lat, state.lon, now);
+    const withMeta = results.map(it=>{
+      const bearing = bearingDeg(state.lat, state.lon, it.lat, it.lon);
+      return Object.assign({}, it, {
+        _tag: lightTagFor(bearing, az),
+        _curScore: currentLightScore(bearing, state.lat, state.lon, now)
+      });
+    });
+    const sorted = state.spotSort==='licht'
+      ? withMeta.slice().sort((a,b)=> a._curScore - b._curScore || (a.dist||0)-(b.dist||0))
+      : withMeta.slice().sort((a,b)=> (a.dist||0)-(b.dist||0));
+    spotList.innerHTML = badgeHtml||'';
+    sorted.slice(0,10).forEach(it=>{
+      const row=document.createElement('a');
+      row.className='spot-row';
+      row.href = it.href || ('https://de.wikipedia.org/wiki/'+encodeURIComponent(it.title.replace(/ /g,'_')));
+      row.target='_blank'; row.rel='noopener noreferrer';
+      const catEl=document.createElement('div'); catEl.className='spot-cat'; catEl.textContent=it.source||'Wikipedia';
+      const bodyEl=document.createElement('div'); bodyEl.className='spot-body';
+      const nameEl=document.createElement('div'); nameEl.className='spot-name'; nameEl.textContent=it.title;
+      bodyEl.appendChild(nameEl);
+      if(it._tag && it._tag.icon){
+        const lightEl=document.createElement('div'); lightEl.className='spot-light'; lightEl.textContent=it._tag.icon; lightEl.title=it._tag.title;
+        bodyEl.appendChild(lightEl);
+      }
+      const distEl=document.createElement('div'); distEl.className='spot-dist'; distEl.textContent=fmtDist(it.dist);
+      row.appendChild(catEl); row.appendChild(bodyEl); row.appendChild(distEl);
+      spotList.appendChild(row);
+    });
+  }
+
+  function updateSpotRadiusHint(){
+    $('spotRadiusHint').style.display = (state.spotCategory==='alle' && state.spotRadiusKm>10) ? 'block' : 'none';
+  }
+  function renderSpotCategoryChips(){
+    const el = $('spotCategoryRow');
+    el.innerHTML = Object.keys(SPOT_CATEGORIES).map(key=>{
+      const c = SPOT_CATEGORIES[key];
+      return '<button class="chip'+(key===state.spotCategory?' active':'')+'" data-v="'+key+'">'+c.label+'</button>';
+    }).join('');
+    el.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.spotCategory = btn.dataset.v;
+        saveSpotPrefs();
+        renderSpotCategoryChips();
+        updateSpotRadiusHint();
+        loadNearbySpots();
+      });
+    });
+  }
+  function renderSpotRadiusChips(){
+    const el = $('spotRadiusRow');
+    el.innerHTML = SPOT_RADIUS_OPTIONS.map(km=>
+      '<button class="chip'+(km===state.spotRadiusKm?' active':'')+'" data-v="'+km+'">'+km+' km</button>'
+    ).join('');
+    el.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.spotRadiusKm = parseInt(btn.dataset.v,10);
+        saveSpotPrefs();
+        renderSpotRadiusChips();
+        updateSpotRadiusHint();
+        loadNearbySpots();
+      });
+    });
+  }
+  function renderSpotSortChips(){
+    const el = $('spotSortRow');
+    const opts = [['entfernung','Entfernung'],['licht','Aktuelles Licht']];
+    el.innerHTML = opts.map(([key,label])=>
+      '<button class="chip'+(key===state.spotSort?' active':'')+'" data-v="'+key+'">'+label+'</button>'
+    ).join('');
+    el.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.spotSort = btn.dataset.v;
+        saveSpotPrefs();
+        renderSpotSortChips();
+        renderSpotRows(lastSpotResults, lastSpotBadgeHtml);
+      });
+    });
+  }
+  renderSpotCategoryChips();
+  renderSpotRadiusChips();
+  renderSpotSortChips();
+  updateSpotRadiusHint();
+
+  async function loadNearbySpots(){
+    const token=++spotLoadToken;
+    setSpotStatus('Suche Orte in der Nähe …');
+    try{
+      const results = await fetchSpotsList(state.lat, state.lon, state.spotRadiusKm, state.spotCategory);
+      if(token!==spotLoadToken) return;
+      if(results.length===0){
+        const label = SPOT_CATEGORIES[state.spotCategory].label;
+        setSpotStatus(state.spotCategory==='alle'
+          ? 'Keine markanten Orte in der Nähe gefunden.'
+          : 'Keine „'+label+'" im Umkreis von '+state.spotRadiusKm+' km gefunden.');
+        return;
+      }
+      renderSpotRows(results, '');
+      upsertOfflineCache(state.lat, state.lon, state.routeLabel, { spots: results, spotCategory: state.spotCategory, spotRadiusKm: state.spotRadiusKm });
+    }catch(e){
+      if(token!==spotLoadToken) return;
+      const off = getOfflinePackage(state.lat, state.lon);
+      if(off && off.spots && off.spots.length){
+        const catLabel = (off.spotCategory && SPOT_CATEGORIES[off.spotCategory]) ? SPOT_CATEGORIES[off.spotCategory].label : 'Alle';
+        renderSpotRows(off.spots, '<div class="offline-badge">📦 Offline-Daten ('+catLabel+', '+(off.spotRadiusKm||'?')+' km) vom '+fmtOfflineStamp(off.savedAt)+' · Artikel brauchen zum Öffnen wieder Netz</div>');
+        return;
+      }
+      if(state.spotCategory!=='alle'){
+        try{
+          const fallback = await fetchSpotsList(state.lat, state.lon, state.spotRadiusKm, 'alle');
+          if(token!==spotLoadToken) return;
+          if(fallback.length){
+            renderSpotRows(fallback, '<div class="offline-badge">⚠️ Kategorie-Suche gerade nicht verfügbar — zeige alle Orte in der Nähe.</div>');
+            return;
+          }
+        }catch(e2){ /* fällt unten auf die Fehlermeldung durch */ }
+      }
+      setSpotStatus('Orte in der Nähe sind hier gerade nicht abrufbar ('+(e && e.message ? e.message : 'unbekannter Fehler')+').');
+    }
+  }
+
+  const GEO_ERROR_TEXT = {
+    1: 'Standortzugriff wurde blockiert. Das kann an den Website-Einstellungen deines Browsers liegen — oder daran, dass diese Seite gerade eingebettet (z. B. in der Chat-Vorschau) angezeigt wird und Standortzugriff von außen unterbunden ist. Öffne die App in diesem Fall über ihren eigenen Link in einem vollen Browser-Tab, oder gib deine Koordinaten unten manuell ein.',
+    2: 'Dein Standort konnte gerade nicht ermittelt werden (Position nicht verfügbar). Versuch es erneut oder gib die Koordinaten manuell ein.',
+    3: 'Zeitüberschreitung bei der Standortermittlung. Versuch es erneut oder gib die Koordinaten manuell ein.'
+  };
+  function openManualLoc(){ $('manualLoc').classList.add('open'); }
+  $('btnLocate').addEventListener('click', ()=>{
+    if(!navigator.geolocation){ locHint.textContent='Dieser Browser unterstützt keine Standortabfrage. Bitte Koordinaten manuell eingeben.'; openManualLoc(); return; }
+    $('btnLocate').textContent='Ermittle …';
+    try{
+      navigator.geolocation.getCurrentPosition(pos=>{
+        state.lat=pos.coords.latitude; state.lon=pos.coords.longitude; state.isLive=true; state.manual=false; state.routeLabel=null;
+        $('btnLocate').textContent='Standort verwenden';
+        try{ localStorage.setItem('lichtspur_lastpos', JSON.stringify({lat:state.lat,lon:state.lon})); }catch(e){}
+        renderLocation();
+      }, err=>{
+        $('btnLocate').textContent='Standort verwenden';
+        locHint.textContent = GEO_ERROR_TEXT[err.code] || ('Standortzugriff nicht möglich ('+err.message+'). Beispieldaten werden angezeigt, oder gib Koordinaten manuell ein.');
+        openManualLoc();
+      }, { enableHighAccuracy:true, timeout:10000 });
+    } catch(e){
+      $('btnLocate').textContent='Standort verwenden';
+      locHint.textContent='Standortzugriff ist auf dieser Seite nicht verfügbar (möglicherweise durch die eingebettete Ansicht blockiert). Öffne die App über ihren eigenen Link in einem vollen Browser-Tab, oder gib deine Koordinaten unten manuell ein.';
+      openManualLoc();
+    }
+  });
+  // Proactive hint if the browser already knows access is denied, before the user even clicks.
+  if(navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({ name:'geolocation' }).then(status=>{
+      if(status.state==='denied'){
+        locHint.textContent = GEO_ERROR_TEXT[1];
+        openManualLoc();
+      }
+    }).catch(()=>{});
+  }
+  $('btnManualToggle').addEventListener('click', ()=>{ $('manualLoc').classList.toggle('open'); });
+  $('btnPhotosRefresh').addEventListener('click', loadNearbyPhotos);
+  $('btnSpotsRefresh').addEventListener('click', loadNearbySpots);
+  $('btnManualApply').addEventListener('click', ()=>{
+    const la=parseFloat($('inLat').value), lo=parseFloat($('inLon').value);
+    if(isNaN(la)||isNaN(lo)||la<-90||la>90||lo<-180||lo>180){ locHint.textContent='Bitte gültige Breite (-90 bis 90) und Länge (-180 bis 180) eingeben.'; return; }
+    state.lat=la; state.lon=lo; state.isLive=false; state.manual=true; state.routeLabel=null;
+    renderLocation();
+  });
+  $('btnRouteSaveToggle').addEventListener('click', ()=>{
+    $('routeAddForm').classList.remove('open');
+    $('routeManualForm').classList.remove('open');
+    $('btnRouteManualToggle').style.display='none';
+    $('routeSearchResults').innerHTML='';
+    $('routeSaveForm').classList.toggle('open');
+    if($('routeSaveForm').classList.contains('open')){
+      $('routeSaveName').value = state.routeLabel || '';
+      $('routeSaveName').focus();
+      if(!state.routeLabel){
+        reverseGeocode(state.lat, state.lon).then(geo=>{
+          if(!$('routeSaveName').value && geo && geo.label) $('routeSaveName').value = geo.label;
+        }).catch(()=>{});
+      }
+    }
+  });
+  $('btnRouteSaveApply').addEventListener('click', ()=>{
+    const name = ($('routeSaveName').value||'').trim() || (fmtCoord(state.lat,'N','S')+' '+fmtCoord(state.lon,'O','W'));
+    routeList.push({ name, lat: state.lat, lon: state.lon });
+    saveRoute(routeList);
+    state.routeLabel = name;
+    $('routeSaveName').value=''; $('routeSaveForm').classList.remove('open');
+    renderRouteList();
+    locTag.textContent='Reiseziel'; locTag.className='loc-tag route';
+    locHint.textContent='Gespeichertes Ziel: '+name+'.';
+  });
+  $('btnRouteAddToggle').addEventListener('click', ()=>{
+    $('routeSaveForm').classList.remove('open');
+    const nowOpen = !$('routeAddForm').classList.contains('open');
+    $('routeAddForm').classList.toggle('open', nowOpen);
+    $('btnRouteManualToggle').style.display = nowOpen ? '' : 'none';
+    if(!nowOpen){ $('routeManualForm').classList.remove('open'); $('routeSearchResults').innerHTML=''; $('routeSearchQuery').value=''; }
+    else { $('routeSearchQuery').focus(); }
+  });
+  $('btnRouteManualToggle').addEventListener('click', ()=>{ $('routeManualForm').classList.toggle('open'); });
+  async function geocodeSearch(query){
+    const params = new URLSearchParams({ q: query, format:'jsonv2', addressdetails:'1', limit:'6', 'accept-language':'de' });
+    const res = await fetch('https://nominatim.openstreetmap.org/search?'+params.toString());
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return await res.json();
+  }
+  function geocodeResultLabel(item, query){
+    const addr = item.address || {};
+    const main = addr.city || addr.town || addr.village || addr.municipality || addr.county || item.name || (item.display_name||'').split(',')[0];
+    const region = (addr.state && addr.state!==main) ? addr.state : '';
+    const country = addr.country || '';
+    const parts = Array.from(new Set([main, region, country].filter(Boolean)));
+    return parts.join(', ') || item.display_name || query;
+  }
+  let routeSearchToken = 0;
+  async function doRouteSearch(){
+    const q = ($('routeSearchQuery').value||'').trim();
+    if(!q) return;
+    const token = ++routeSearchToken;
+    $('btnRouteSearch').disabled = true; $('btnRouteSearch').textContent='Suche …';
+    $('routeSearchResults').innerHTML = '<div class="route-status">Suche „'+escHtml(q)+'" …</div>';
+    try{
+      const results = await geocodeSearch(q);
+      if(token!==routeSearchToken) return;
+      if(!results.length){
+        $('routeSearchResults').innerHTML = '<div class="route-status">Keine Treffer für „'+escHtml(q)+'". Versuch einen anderen Suchbegriff oder gib die Koordinaten manuell ein.</div>';
+        return;
+      }
+      $('routeSearchResults').innerHTML = results.map((r,i)=>{
+        const label = geocodeResultLabel(r, q);
+        const sub = (r.display_name||'').length>70 ? r.display_name.slice(0,68)+'…' : (r.display_name||'');
+        return '<div class="route-item result" data-i="'+i+'">'+
+          '<div class="ri-main"><div class="ri-name">'+escHtml(label)+'</div><div class="ri-coords">'+escHtml(sub)+'</div></div></div>';
+      }).join('');
+      $('routeSearchResults').querySelectorAll('.route-item').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          const i = parseInt(el.dataset.i,10);
+          const r = results[i];
+          const name = geocodeResultLabel(r, q);
+          routeList.push({ name, lat: parseFloat(r.lat), lon: parseFloat(r.lon) });
+          saveRoute(routeList);
+          $('routeSearchQuery').value=''; $('routeSearchResults').innerHTML='';
+          $('routeAddForm').classList.remove('open'); $('btnRouteManualToggle').style.display='none';
+          renderRouteList();
+        });
+      });
+    }catch(e){
+      if(token!==routeSearchToken) return;
+      $('routeSearchResults').innerHTML = '<div class="route-status">Suche gerade nicht möglich ('+(e && e.message ? e.message : 'Fehler')+'). Bitte Koordinaten manuell eingeben.</div>';
+    }finally{
+      if(token===routeSearchToken){ $('btnRouteSearch').disabled=false; $('btnRouteSearch').textContent='Suchen'; }
+    }
+  }
+  $('btnRouteSearch').addEventListener('click', doRouteSearch);
+  $('routeSearchQuery').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); doRouteSearch(); } });
+  $('btnRouteAddApply').addEventListener('click', ()=>{
+    const name = ($('routeName').value||'').trim();
+    const la2 = parseFloat($('routeLat').value), lo2 = parseFloat($('routeLon').value);
+    if(isNaN(la2)||isNaN(lo2)||la2<-90||la2>90||lo2<-180||lo2>180){ $('routeHint').style.display='block'; $('routeHint').textContent='Bitte gültige Breite (-90 bis 90) und Länge (-180 bis 180) eingeben.'; return; }
+    routeList.push({ name: name || (fmtCoord(la2,'N','S')+' '+fmtCoord(lo2,'O','W')), lat: la2, lon: lo2 });
+    saveRoute(routeList);
+    $('routeName').value=''; $('routeLat').value=''; $('routeLon').value=''; $('routeManualForm').classList.remove('open');
+    $('routeAddForm').classList.remove('open'); $('btnRouteManualToggle').style.display='none';
+    renderRouteList();
+  });
+  $('btnRouteOfflineAll').addEventListener('click', async ()=>{
+    const btn = $('btnRouteOfflineAll');
+    btn.disabled = true;
+    for(let i=0;i<routeList.length;i++){
+      btn.textContent = 'Speichere '+(i+1)+' / '+routeList.length+' …';
+      try{ await saveOfflinePackage(routeList[i].lat, routeList[i].lon, routeList[i].name); }catch(e){ /* weiter mit dem nächsten Ziel, best effort */ }
+      renderRouteList();
+    }
+    btn.textContent = 'Alle Reiseziele offline speichern';
+    btn.disabled = false;
+  });
+  (function tryRestore(){
+    try{
+      const raw=localStorage.getItem('lichtspur_lastpos');
+      if(raw){ const p=JSON.parse(raw); if(typeof p.lat==='number'&&typeof p.lon==='number'){ state.lat=p.lat; state.lon=p.lon; state.isLive=true; } }
+    }catch(e){}
+    renderLocation();
+  })();
+
+  /* ================= chart ================= */
+  function dateKeyFor(d){ return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate()+'|'+state.lat.toFixed(3)+'|'+state.lon.toFixed(3); }
+
+  function buildDayModel(now){
+    const key = dateKeyFor(now);
+    if(dayCache.dateKey===key) return dayCache;
+
+    const lat=state.lat, lon=state.lon;
+    const sunrise = eventTimeUTC(now, lat, lon, -0.833, true);
+    const sunset  = eventTimeUTC(now, lat, lon, -0.833, false);
+    let domainStart, domainEnd;
+    if(sunrise && sunset){
+      domainStart = new Date(sunrise.getTime()-45*60000);
+      domainEnd   = new Date(sunset.getTime()+45*60000);
+    } else {
+      domainStart = new Date(now); domainStart.setHours(0,0,0,0);
+      domainEnd = new Date(domainStart.getTime()+24*3600000);
+    }
+    if(now < domainStart) domainStart = new Date(now.getTime()-30*60000);
+    if(now > domainEnd) domainEnd = new Date(now.getTime()+30*60000);
+
+    const steps=72, points=[];
+    for(let i=0;i<=steps;i++){
+      const t=new Date(domainStart.getTime() + (domainEnd-domainStart)*i/steps);
+      points.push({ t, elev: sunPosition(t, lat, lon).elevation });
+    }
+    const maxElev = Math.max(20, ...points.map(p=>p.elev)) + 6;
+
+    dayCache = { dateKey:key, domainStart, domainEnd, points, maxElev, sunrise, sunset };
+    return dayCache;
+  }
+
+  function renderChart(now){
+    const model = buildDayModel(now);
+    const { domainStart, domainEnd, points, maxElev } = model;
+    const W=600, H=190, padL=34, padR=8, padT=10, padB=22;
+    const minElev=-14;
+    const xOf = t => padL + (t-domainStart)/(domainEnd-domainStart)*(W-padL-padR);
+    const yOf = e => padT + (1-(e-minElev)/(maxElev-minElev))*(H-padT-padB);
+
+    const bandDefs = [
+      { from:minElev, to:-6, fill:'#0c111d' },
+      { from:-6, to:-4, fill:'#33455c' },
+      { from:-4, to:6, fill:'#5a3a22' },
+      { from:6, to:maxElev, fill:'#3a3520' }
+    ];
+    let svg='';
+    bandDefs.forEach(b=>{
+      const y1=yOf(b.to), y2=yOf(b.from);
+      svg += '<rect x="'+padL+'" y="'+y1+'" width="'+(W-padL-padR)+'" height="'+(y2-y1)+'" fill="'+b.fill+'"></rect>';
+    });
+
+    // horizon line
+    const hy = yOf(0);
+    svg += '<line x1="'+padL+'" y1="'+hy+'" x2="'+(W-padR)+'" y2="'+hy+'" stroke="#8a7c63" stroke-width="1" stroke-dasharray="3,3"></line>';
+    svg += '<text class="chart-axis-label" x="4" y="'+(hy+3)+'">0°</text>';
+
+    // curve
+    let path='M '+points.map(p=>xOf(p.t).toFixed(1)+','+yOf(p.elev).toFixed(1)).join(' L ');
+    svg += '<path d="'+path+'" fill="none" stroke="#f3ecdd" stroke-width="1.6"></path>';
+
+    // sunrise / sunset ticks
+    if(model.sunrise && model.sunrise>=domainStart && model.sunrise<=domainEnd){
+      const x=xOf(model.sunrise);
+      svg += '<line x1="'+x+'" y1="'+padT+'" x2="'+x+'" y2="'+(H-padB)+'" stroke="#8a7c63" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"></line>';
+      svg += '<text class="chart-axis-label" x="'+x+'" y="'+(H-6)+'" text-anchor="middle">'+fmtTime(model.sunrise)+'</text>';
+    }
+    if(model.sunset && model.sunset>=domainStart && model.sunset<=domainEnd){
+      const x=xOf(model.sunset);
+      svg += '<line x1="'+x+'" y1="'+padT+'" x2="'+x+'" y2="'+(H-padB)+'" stroke="#8a7c63" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"></line>';
+      svg += '<text class="chart-axis-label" x="'+x+'" y="'+(H-6)+'" text-anchor="middle">'+fmtTime(model.sunset)+'</text>';
+    }
+
+    // now marker
+    const pos = sunPosition(now, state.lat, state.lon);
+    const nx=xOf(now), ny=yOf(Math.max(minElev, Math.min(maxElev, pos.elevation)));
+    svg += '<line x1="'+nx+'" y1="'+padT+'" x2="'+nx+'" y2="'+(H-padB)+'" stroke="#e8a33d" stroke-width="1" opacity="0.55"></line>';
+    svg += '<circle cx="'+nx+'" cy="'+ny+'" r="5" fill="#e8a33d" stroke="#12100d" stroke-width="1.5"></circle>';
+    svg += '<text class="chart-now-label" x="'+Math.min(W-padR-2, Math.max(padL+2, nx))+'" y="'+(padT+10)+'" text-anchor="middle">jetzt</text>';
+
+    chartSvg.innerHTML = svg;
+    return pos;
+  }
+
+  function fmtTime(d){ return d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
+
+  /* ================= events / countdown ================= */
+  const EVENTS = [
+    ['Blaue Stunde (Morgen) beginnt', -6, true],
+    ['Golden Hour (Morgen) beginnt', -4, true],
+    ['Sonnenaufgang', -0.833, true],
+    ['Golden Hour (Morgen) endet', 6, true],
+    ['Golden Hour (Abend) beginnt', 6, false],
+    ['Sonnenuntergang', -0.833, false],
+    ['Blaue Stunde (Abend) beginnt', -4, false],
+    ['Blaue Stunde (Abend) endet', -6, false]
+  ];
+  function nextEvents(now){
+    let list=[];
+    [now, new Date(now.getTime()+86400000)].forEach(d=>{
+      EVENTS.forEach(([name, elev, rising])=>{
+        const t=eventTimeUTC(d, state.lat, state.lon, elev, rising);
+        if(t) list.push({ name, t });
+      });
+    });
+    list = list.filter(e=>e.t>now).sort((a,b)=>a.t-b.t);
+    return list;
+  }
+  function fmtCountdown(ms){
+    if(ms<=0) return 'jetzt';
+    const totalSec=Math.floor(ms/1000);
+    const h=Math.floor(totalSec/3600), m=Math.floor((totalSec%3600)/60), s=totalSec%60;
+    if(h>0) return 'in '+h+' Std '+m+' Min';
+    if(m>0) return 'in '+m+' Min '+s+' Sek';
+    return 'in '+s+' Sek';
+  }
+
+  /* ================= compass ================= */
+  const DIRS8 = ['Nord','Nordost','Ost','Südost','Süd','Südwest','West','Nordwest'];
+  function dir8(deg){ return DIRS8[Math.round(((deg%360+360)%360)/45)%8]; }
+
+  /* ---- sun path diagram on the compass dial (no device sensors needed) ---- */
+  const COMPASS_CX=110, COMPASS_CY=110, COMPASS_R=95;
+  const COMPASS_ELEV_MIN=-6, COMPASS_ELEV_MAX=90;
+  function compassRadiusForElev(elev){
+    const clamped = Math.max(COMPASS_ELEV_MIN, Math.min(COMPASS_ELEV_MAX, elev));
+    const frac = (clamped - COMPASS_ELEV_MIN) / (COMPASS_ELEV_MAX - COMPASS_ELEV_MIN);
+    return COMPASS_R * (1 - frac);
+  }
+  function polarPoint(azimuthDeg, r){
+    const rad = toRad(azimuthDeg);
+    return { x: COMPASS_CX + r*Math.sin(rad), y: COMPASS_CY - r*Math.cos(rad) };
+  }
+  function compassPoint(azimuthDeg, elev){
+    return polarPoint(azimuthDeg, compassRadiusForElev(elev));
+  }
+  let compassCache = { dateKey:null, segs:null };
+  function buildCompassPath(now){
+    const key = dateKeyFor(now);
+    if(compassCache.dateKey===key) return compassCache;
+    let start = eventTimeUTC(now, state.lat, state.lon, COMPASS_ELEV_MIN, true);
+    let end = eventTimeUTC(now, state.lat, state.lon, COMPASS_ELEV_MIN, false);
+    if(!start) start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    if(!end) end = new Date(start.getTime() + 20*3600000);
+    const stepMs = 5*60000;
+    const segs = [];
+    let prevPt=null;
+    for(let t=start.getTime(); t<=end.getTime(); t+=stepMs){
+      const d = new Date(t);
+      const pos = sunPosition(d, state.lat, state.lon);
+      const pt = compassPoint(pos.azimuth, pos.elevation);
+      const phase = getPhase(pos.elevation);
+      if(prevPt){ segs.push({x1:prevPt.x, y1:prevPt.y, x2:pt.x, y2:pt.y, phase}); }
+      prevPt = pt;
+    }
+    compassCache = { dateKey:key, segs };
+    return compassCache;
+  }
+  const COMPASS_PHASE_COLOR = { tag:'var(--sun)', golden:'var(--ember)', blau:'var(--dusk)', nacht:'var(--paper-dim)' };
+  function renderCompassDial(now){
+    const cache = buildCompassPath(now);
+    const parts = [];
+    parts.push('<circle cx="'+COMPASS_CX+'" cy="'+COMPASS_CY+'" r="'+COMPASS_R+'" fill="var(--surface-2)" stroke="var(--line)" stroke-width="1"></circle>');
+    [0,6].forEach(e=>{
+      const r = compassRadiusForElev(e);
+      parts.push('<circle cx="'+COMPASS_CX+'" cy="'+COMPASS_CY+'" r="'+r.toFixed(1)+'" fill="none" stroke="var(--line)" stroke-width="1" stroke-dasharray="2,3"></circle>');
+    });
+    for(let deg=0; deg<360; deg+=45){
+      const isMain = deg%90===0;
+      const outer = polarPoint(deg, COMPASS_R);
+      const inner = polarPoint(deg, isMain?78:86);
+      parts.push('<line x1="'+outer.x.toFixed(1)+'" y1="'+outer.y.toFixed(1)+'" x2="'+inner.x.toFixed(1)+'" y2="'+inner.y.toFixed(1)+'" stroke="var(--paper-dim)" stroke-width="'+(isMain?2:1)+'"></line>');
+    }
+    const mainLabels = {0:'N',90:'O',180:'S',270:'W'};
+    Object.keys(mainLabels).forEach(deg=>{
+      const p = polarPoint(Number(deg), COMPASS_R+13);
+      parts.push('<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" class="compass-label">'+mainLabels[deg]+'</text>');
+    });
+    cache.segs.forEach(s=>{
+      parts.push('<line x1="'+s.x1.toFixed(1)+'" y1="'+s.y1.toFixed(1)+'" x2="'+s.x2.toFixed(1)+'" y2="'+s.y2.toFixed(1)+'" stroke="'+(COMPASS_PHASE_COLOR[s.phase]||'var(--paper-dim)')+'" stroke-width="3" stroke-linecap="round"></line>');
+    });
+    const sunriseT = eventTimeUTC(now, state.lat, state.lon, -0.833, true);
+    const sunsetT = eventTimeUTC(now, state.lat, state.lon, -0.833, false);
+    [sunriseT, sunsetT].forEach(t=>{
+      if(!t) return;
+      const pos = sunPosition(t, state.lat, state.lon);
+      const pt = compassPoint(pos.azimuth, pos.elevation);
+      parts.push('<circle cx="'+pt.x.toFixed(1)+'" cy="'+pt.y.toFixed(1)+'" r="3.5" fill="var(--ink)" stroke="var(--sun-soft)" stroke-width="1.5"></circle>');
+    });
+    const curPos = sunPosition(now, state.lat, state.lon);
+    if(curPos.elevation > COMPASS_ELEV_MIN){
+      const cp = compassPoint(curPos.azimuth, curPos.elevation);
+      parts.push('<circle cx="'+cp.x.toFixed(1)+'" cy="'+cp.y.toFixed(1)+'" r="6" fill="var(--sun)" stroke="var(--ink)" stroke-width="1.5"></circle>');
+    }
+    if(state.compassOn && state.heading!=null){
+      const hp = polarPoint(state.heading, COMPASS_R);
+      parts.push('<line x1="'+COMPASS_CX+'" y1="'+COMPASS_CY+'" x2="'+hp.x.toFixed(1)+'" y2="'+hp.y.toFixed(1)+'" stroke="var(--paper)" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.75"></line>');
+      parts.push('<circle cx="'+hp.x.toFixed(1)+'" cy="'+hp.y.toFixed(1)+'" r="4" fill="var(--paper)"></circle>');
+    }
+    compassSvg.innerHTML = parts.join('');
+  }
+
+  $('btnCompass').addEventListener('click', enableCompass);
+  function enableCompass(){
+    const DOE = window.DeviceOrientationEvent;
+    if(DOE && typeof DOE.requestPermission==='function'){
+      DOE.requestPermission().then(state_=>{
+        if(state_==='granted'){ attachCompass(); } else { compassMsg('Zugriff auf den Kompass wurde nicht erlaubt.'); }
+      }).catch(()=>compassMsg('Kompass auf diesem Gerät nicht verfügbar.'));
+    } else if(DOE){
+      attachCompass();
+    } else {
+      compassMsg('Dieser Browser unterstützt keinen Kompasszugriff.');
+    }
+  }
+  function attachCompass(){
+    state.compassOn=true;
+    $('btnCompass').textContent='Kompass aktiv';
+    $('btnCompass').disabled=true;
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    compassLine.style.display='block';
+    compassLine.textContent='Kompass wird kalibriert … bewege dein Gerät kurz in einer Acht.';
+  }
+  function compassMsg(msg){ compassLine.style.display='block'; compassLine.textContent=msg; }
+  function handleOrientation(e){
+    let heading=null;
+    if(typeof e.webkitCompassHeading==='number') heading=e.webkitCompassHeading;
+    else if(e.alpha!=null) heading=(360-e.alpha)%360;
+    if(heading!=null) state.heading=heading;
+  }
+
+  /* ================= tips ================= */
+  function updateTips(){
+    const now=new Date();
+    const pos=sunPosition(now, state.lat, state.lon);
+    const phase=getPhase(pos.elevation);
+    const settings=adjustSettings(settingsBase[phase], state.motiv, phase);
+    statAperture.textContent=settings.aperture;
+    statShutter.textContent=settings.shutter;
+    statIso.textContent=settings.iso;
+    tipComposition.textContent=motivTip[state.motiv];
+    tipPhase.textContent=phaseAngle[phase];
+    tipWetter.textContent=wetterNote[state.wetter];
+    return phase;
+  }
+
+  /* ================= save / logbook ================= */
+  function loadLog(){ try{ return JSON.parse(localStorage.getItem('lichtspur_log')||'[]'); }catch(e){ return []; } }
+  function saveLog(list){ try{ localStorage.setItem('lichtspur_log', JSON.stringify(list)); }catch(e){} }
+  function renderLog(){
+    const list=loadLog();
+    if(list.length===0){
+      logList.innerHTML='<div class="log-empty">Noch nichts gespeichert — dein erster festgehaltener Moment erscheint hier.</div>';
+      return;
+    }
+    logList.innerHTML = list.slice().reverse().map((e,revIdx)=>{
+      const idx=list.length-1-revIdx;
+      const d=new Date(e.ts);
+      const timeStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+' '+fmtTime(d);
+      return '<div class="log-row">'
+        +'<div class="log-time">'+timeStr+'</div>'
+        +'<div class="log-body"><div class="log-tags">'+e.motiv+' · '+e.wetter+' · '+e.elev.toFixed(0)+'°</div>'
+        +'<div class="log-note">'+(e.note ? escapeHtml(e.note) : '<em style="color:var(--paper-dim)">ohne Notiz</em>')+'</div></div>'
+        +'<button class="log-del" data-idx="'+idx+'" title="Löschen">×</button>'
+        +'</div>';
+    }).join('');
+    logList.querySelectorAll('.log-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const list2=loadLog();
+        list2.splice(parseInt(btn.dataset.idx,10),1);
+        saveLog(list2);
+        renderLog();
+      });
+    });
+  }
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  $('btnSaveMoment').addEventListener('click', ()=>{ $('noteInputWrap').classList.add('open'); $('noteInput').focus(); });
+  $('btnSaveConfirm').addEventListener('click', ()=>{
+    const now=new Date();
+    const pos=sunPosition(now, state.lat, state.lon);
+    const list=loadLog();
+    list.push({ ts:now.getTime(), lat:state.lat, lon:state.lon, motiv:state.motiv, wetter:state.wetter, elev:pos.elevation, note:$('noteInput').value.trim() });
+    saveLog(list);
+    $('noteInput').value='';
+    $('noteInputWrap').classList.remove('open');
+    renderLog();
+  });
+
+  /* ================= main tick ================= */
+  function tick(){
+    const now=new Date();
+    dateLabel.textContent = now.toLocaleDateString('de-DE',{weekday:'long', day:'2-digit', month:'long'});
+    timeLabel.textContent = now.toLocaleTimeString('de-DE');
+
+    const pos = renderChart(now);
+    const phase = getPhase(pos.elevation);
+    elevValue.textContent = (pos.elevation>=0?'+':'')+pos.elevation.toFixed(1)+'°';
+    phasePill.className='phase-pill phase-'+phase;
+    phasePill.textContent=phaseLabel[phase];
+
+    const upcoming=nextEvents(now);
+    if(upcoming.length){
+      nextEventName.textContent=upcoming[0].name;
+      nextEventCountdown.textContent=fmtCountdown(upcoming[0].t-now);
+    }
+
+    if(state.compassOn && state.heading!=null){
+      const diff=((pos.azimuth-state.heading+540)%360)-180;
+      let clock=Math.round(((diff%360+360)%360)/30); if(clock===0) clock=12; if(clock>12) clock-=12;
+      compassLine.innerHTML='Sonne steht Richtung '+dir8(pos.azimuth)+' (<span class="clockface">'+clock+' Uhr</span> relativ zu deiner Blickrichtung).';
+    }
+    renderCompassDial(now);
+
+    updateTips();
+  }
+
+  tick();
+  setInterval(tick, 1000);
+  renderLog();
+  updateUnsplashUI();
+
+})();
+</script>
+
+</body></html>
